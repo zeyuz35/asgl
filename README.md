@@ -10,6 +10,22 @@ v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/li
 [![Package
 Version](https://img.shields.io/badge/version-2.1.4-blue.svg)](https://cran.r-project.org/package=asgl)
 
+## Fork of original asgl to incorporate sparse matrices
+
+This is a fork of asgl to incorporate sparse matrices. 
+
+The changes are done in a somewhat janky way, as python is not my main language. 
+In particular, for sparse matrices, `variability_pct` must be set to 1. 
+
+Hence, a new `test_skmodels_sparse.py` specifically for sparse matrices has the `variability_pct=1`. 
+
+However, it should not interfere with original functionality if you pass dense matrices.
+
+Install via
+```
+uv pip install --upgrade git+https://github.com/zeyuz35/asgl.git
+```
+
 ## Introduction
 
 The `asgl` package is a versatile and robust tool designed for fitting a
