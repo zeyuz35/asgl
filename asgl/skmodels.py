@@ -47,6 +47,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         alpha: float = 0.5,
         solver: str = "CLARABEL",
         tol: float = 1e-3,
+        verbose: bool = False,
     ):
         self.model = model
         self.penalization = penalization
@@ -56,6 +57,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         self.alpha = alpha
         self.solver = solver
         self.tol = tol
+        self.verbose = verbose
 
     @property
     def _estimator_type(self):
@@ -145,7 +147,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
             self.solver if self.solver != "default" else None
         )  # Let cp choose default
         try:
-            problem.solve(solver=chosen_solver)
+            problem.solve(solver=chosen_solver, verbose=self.verbose)
         except (ValueError, cp.error.SolverError, cp.error.DCPError):
             warnings.warn(
                 f"Default solver {self.solver} failed. Using alternative options from {solver_options}",
@@ -156,7 +158,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 solver_options.remove(chosen_solver)  # Skip the one that already failed
             for alt_solver in solver_options:
                 try:
-                    problem.solve(solver=alt_solver)
+                    problem.solve(solver=alt_solver, verbose=self.verbose)
                     if "optimal" in problem.status.lower():
                         warnings.warn(
                             f"Successfully solved with alternative solver: {alt_solver}",
