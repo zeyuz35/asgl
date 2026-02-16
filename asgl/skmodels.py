@@ -708,6 +708,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         group_weights: np.ndarray | None = None,
         weight_tol: float = 1e-4,
         tol: float = 1e-3,
+        verbose: bool = False,
     ):
         super().__init__(
             model=model,
@@ -729,6 +730,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         self.individual_weights = individual_weights
         self.group_weights = group_weights
         self.weight_tol = weight_tol
+        self.verbose = verbose
 
     # Penalized problems
     def _aridge(
