@@ -218,7 +218,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
         m = X.shape[1]
         beta_var = cp.Variable(m)
         intercept_var = cp.Variable() if self.fit_intercept else 0
-        pred = X @ beta_var + intercept_var
+        # wrap the X in a constant to avoid issues with sparse matrices in cvxpy expressions
+        X_constant = cp.Constant(X)
+        pred = X_constant @ beta_var + intercept_var
         objective_function = self._define_objective_function(y, pred)
         # Handle unpenalized models
         if self.penalization is None:
@@ -291,7 +293,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         intercept = self.intercept_ if self.fit_intercept else 0
         # predictions = np.dot(X, self.coef_) + intercept
         predictions = (
-            X * self.coef_ + intercept
+            X @ self.coef_ + intercept
             if sparse.issparse(X)
             else np.dot(X, self.coef_) + intercept
         )
