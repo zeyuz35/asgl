@@ -108,7 +108,10 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _quantile_function(self, X) -> cp.Expression:
         """cp quantile loss function."""
-        return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
+        # return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
+        # new implementation, should be more efficient avoiding abs
+        q = float(self.quantile)
+        return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
 
     def _define_objective_function(
         self, y: np.ndarray, model_prediction: cp.Expression
