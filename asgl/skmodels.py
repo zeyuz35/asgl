@@ -106,12 +106,20 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 f"penalization must be one of {sorted(ALL_PENALTIES)}; got {self.penalization}."
             )
 
-    def _quantile_function(self, X) -> cp.Expression:
-        """cp quantile loss function."""
-        # return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
-        # new implementation, should be more efficient avoiding abs
-        q = float(self.quantile)
-        return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
+    # def _quantile_function(self, X) -> cp.Expression:
+    #     """cp quantile loss function."""
+    #     # return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
+    #     # new implementation, should be more efficient avoiding abs
+    #     q = float(self.quantile)
+    #     return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
+
+    # def _define_quantile_objective(n, q, u, v):
+    #     # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
+    #     return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
+
+    def _define_quantile_objective(self, n, q, u, v):
+        # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
+        return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
 
     def _define_objective_function(
         self, y: np.ndarray, model_prediction: cp.Expression
@@ -218,19 +226,45 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _obtain_beta(
         self, X: ArrayOrSparse, y: np.ndarray, group_index: Optional[Sequence[int]]
     ) -> Tuple[np.ndarray, np.ndarray]:
+        n = X.shape[0]
         m = X.shape[1]
         beta_var = cp.Variable(m)
         intercept_var = cp.Variable() if self.fit_intercept else 0
         # wrap the X in a constant to avoid issues with sparse matrices in cvxpy expressions
         X_constant = cp.Constant(X)
         pred = X_constant @ beta_var + intercept_var
-        objective_function = self._define_objective_function(y, pred)
-        # Handle unpenalized models
-        if self.penalization is None:
-            problem = cp.Problem(cp.Minimize(objective_function))
+        # objective_function = self._define_objective_function(y, pred)
+        # # Handle unpenalized models
+        # if self.penalization is None:
+        #     problem = cp.Problem(cp.Minimize(objective_function))
+        # else:
+        #     pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
+        #     problem = cp.Problem(cp.Minimize(objective_function + pen))
+        if self.model == "qr":
+            # residual splitting variables (nonnegative)
+            u = cp.Variable(n, nonneg=True)
+            v = cp.Variable(n, nonneg=True)
+
+            # equality constraints: y - pred == u - v
+            constraints = [y - pred == u - v]
+
+            objective = self._define_quantile_objective(n, self.quantile, u, v)
+
+            # add penalties if any (pen should operate on beta_var)
+            if self.penalization is not None:
+                pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
+                objective = objective + pen
+
+            problem = cp.Problem(cp.Minimize(objective), constraints)
+
         else:
-            pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
-            problem = cp.Problem(cp.Minimize(objective_function + pen))
+            # existing lm / logit handling (keeping X_const @ beta_var)
+            objective = self._define_objective_function(y, pred)
+            if self.penalization is not None:
+                pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
+                objective = objective + pen
+            problem = cp.Problem(cp.Minimize(objective))
+
         self._solve_cp_problem(problem)
         beta_sol = beta_var.value
         intercept_sol = intercept_var.value if self.fit_intercept else 0
