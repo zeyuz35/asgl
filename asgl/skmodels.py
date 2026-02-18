@@ -412,6 +412,7 @@ class AdaptiveWeights:
         individual_weights=None,
         group_weights=None,
         weight_tol: float = 1e-4,
+        verbose: bool = False,
     ):
         self.model = model
         self.penalization = penalization
@@ -426,6 +427,7 @@ class AdaptiveWeights:
         self.individual_weights = individual_weights
         self.group_weights = group_weights
         self.weight_tol = weight_tol
+        self.verbose = verbose
 
     def _wpca_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
@@ -537,6 +539,7 @@ class AdaptiveWeights:
             penalization=None,
             fit_intercept=True,
             quantile=self.quantile,
+            verbose=self.verbose,
         )
         unpenalized_model.fit(X=X, y=y)
         tmp_weight = np.abs(unpenalized_model.coef_)
@@ -549,6 +552,7 @@ class AdaptiveWeights:
             lambda1=self.lambda1_weights,
             fit_intercept=True,
             quantile=self.quantile,
+            verbose=self.verbose,
         )
         lasso_model.fit(X=X, y=y)
         tmp_weight = np.abs(lasso_model.coef_)
@@ -561,6 +565,7 @@ class AdaptiveWeights:
             lambda1=self.lambda1_weights,
             fit_intercept=True,
             quantile=self.quantile,
+            verbose=self.verbose,
         )
         ridge_model.fit(X=X, y=y)
         tmp_weight = np.abs(ridge_model.coef_)
@@ -730,6 +735,7 @@ class Regressor(BaseModel, AdaptiveWeights):
             alpha=alpha,
             solver=solver,
             tol=tol,
+            verbose=verbose,
             canon_backend=canon_backend,
         )
         self.weight_technique = weight_technique
