@@ -264,7 +264,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 u = cp.Variable(n, nonneg=True)
                 v = cp.Variable(n, nonneg=True)
                 # Reshape pred to (n,) for single output constraint
-                pred_reshaped = cp.reshape(pred, (n,))
+                pred_reshaped = cp.reshape(pred, (n,), order="F")
                 constraints = [y.ravel() - pred_reshaped == u - v]
             else:
                 u = cp.Variable((n, my), nonneg=True)
@@ -519,9 +519,12 @@ class AdaptiveWeights:
                 stacklevel=2,
             )
         n_comp = np.searchsorted(fractions_of_explained_variance, self.variability_pct)
+        # Ensure n_comp is at least 1
+        n_comp = max(1, n_comp)
         pls = PLSRegression(n_components=n_comp, scale=False)
         pls.fit(X, y)
-        tmp_weight = np.abs(np.asarray(pls.coef_))
+        # pls.coef_ has shape (n_outputs, n_features), transpose to (n_features, n_outputs)
+        tmp_weight = np.abs(np.asarray(pls.coef_).T)
         # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
         if tmp_weight.ndim > 1:
             tmp_weight = np.linalg.norm(tmp_weight, axis=1)
