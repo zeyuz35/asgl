@@ -259,16 +259,16 @@ class BaseModel(BaseEstimator, RegressorMixin):
         #     problem = cp.Problem(cp.Minimize(objective_function + pen))
         if self.model == "qr":
             # residual splitting variables (nonnegative)
-            u = cp.Variable(n, nonneg=True)
-            v = cp.Variable(n, nonneg=True)
-
-            # equality constraints: y - pred == u - v
-            # Reshape pred to match y shape for constraint
+            # For multi-output: u,v shape (n, my), for single output: (n,)
             if my == 1:
-                # When single output, pred is (n, 1), reshape to (n,)
+                u = cp.Variable(n, nonneg=True)
+                v = cp.Variable(n, nonneg=True)
+                # Reshape pred to (n,) for single output constraint
                 pred_reshaped = cp.reshape(pred, (n,))
                 constraints = [y.ravel() - pred_reshaped == u - v]
             else:
+                u = cp.Variable((n, my), nonneg=True)
+                v = cp.Variable((n, my), nonneg=True)
                 constraints = [y - pred == u - v]
 
             objective = self._define_quantile_objective(n, self.quantile, u, v)
@@ -484,7 +484,12 @@ class AdaptiveWeights:
         unpenalized_model.fit(X=t, y=y)
         beta_sol = unpenalized_model.coef_
         # Recover an estimation of the beta parameters and use it as weight
-        tmp_weight = np.abs(np.dot(p, beta_sol)).ravel()
+        tmp_weight = np.abs(np.dot(p, beta_sol))
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
+        else:
+            tmp_weight = tmp_weight.ravel()
         return tmp_weight
 
     def _wpls_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
@@ -516,7 +521,12 @@ class AdaptiveWeights:
         n_comp = np.searchsorted(fractions_of_explained_variance, self.variability_pct)
         pls = PLSRegression(n_components=n_comp, scale=False)
         pls.fit(X, y)
-        tmp_weight = np.abs(np.asarray(pls.coef_).ravel())
+        tmp_weight = np.abs(np.asarray(pls.coef_))
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
+        else:
+            tmp_weight = tmp_weight.ravel()
         return tmp_weight
 
     def _wsparse_pca(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
@@ -557,7 +567,12 @@ class AdaptiveWeights:
         unpenalized_model.fit(X=t[:, 0:n_comp], y=y)
         beta_sol = unpenalized_model.coef_
         # Recover an estimation of the beta parameters and use it as weight
-        tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol)).ravel()
+        tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol))
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
+        else:
+            tmp_weight = tmp_weight.ravel()
         return tmp_weight
 
     def _wunpenalized(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
@@ -575,6 +590,9 @@ class AdaptiveWeights:
         )
         unpenalized_model.fit(X=X, y=y)
         tmp_weight = np.abs(unpenalized_model.coef_)
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
     def _wlasso(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
@@ -590,6 +608,9 @@ class AdaptiveWeights:
         )
         lasso_model.fit(X=X, y=y)
         tmp_weight = np.abs(lasso_model.coef_)
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
     def _wridge(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
@@ -605,6 +626,9 @@ class AdaptiveWeights:
         )
         ridge_model.fit(X=X, y=y)
         tmp_weight = np.abs(ridge_model.coef_)
+        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
+        if tmp_weight.ndim > 1:
+            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
     def _check_type_penalization(self) -> Tuple[bool, bool]:
