@@ -797,9 +797,10 @@ class Regressor(BaseModel, AdaptiveWeights):
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        individual_weights_param = cp.Parameter(
-            len(self.individual_weights), nonneg=True, value=self.individual_weights
-        )
+        mx, my = beta_var.shape
+        # Reshape weights to (mx, 1) for proper broadcasting across my outputs
+        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         pen = lambda_param * cp.sum_squares(
             cp.multiply(individual_weights_param, beta_var)
         )
@@ -809,9 +810,10 @@ class Regressor(BaseModel, AdaptiveWeights):
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        individual_weights_param = cp.Parameter(
-            len(self.individual_weights), nonneg=True, value=self.individual_weights
-        )
+        mx, my = beta_var.shape
+        # Reshape weights to (mx, 1) for proper broadcasting across my outputs
+        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         pen = lambda_param * cp.norm1(cp.multiply(individual_weights_param, beta_var))
         return pen
 
@@ -823,17 +825,21 @@ class Regressor(BaseModel, AdaptiveWeights):
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
         )
+        mx, my = beta_var.shape
+        # For each group, compute the norm of all features in that group across all outputs
+        # This gives the 2-norm of the group's coefficients (treating each output separately)
         group_norms = cp.hstack(
-            [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
+            [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
         pen = lambda_param * cp.sum(cp.multiply(group_weights, group_norms))
         return pen
 
     def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
-        individual_weights_param = cp.Parameter(
-            len(self.individual_weights), nonneg=True, value=self.individual_weights
-        )
+        mx, my = beta_var.shape
+        # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
+        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
         unique_groups, group_sizes = np.unique(group_index, return_counts=True)
         indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
@@ -841,8 +847,9 @@ class Regressor(BaseModel, AdaptiveWeights):
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
         )
+        # For each group, compute the norm of all features in that group across all outputs
         group_norms = cp.hstack(
-            [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
+            [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
         individual_penalization = individual_param * cp.norm1(
             cp.multiply(individual_weights_param, beta_var)
