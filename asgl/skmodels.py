@@ -128,7 +128,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     ) -> cp.Expression:
         # Define the objective function based on the problem to solve
         if self.model == "lm":
-            return (1.0 / y.shape[0]) * cp.sum_squares(y - model_prediction)
+            return (1.0 / y.shape[0]) * cp.norm2(y - model_prediction)
         elif self.model == "qr":
             return (1.0 / y.shape[0]) * cp.sum(
                 self._quantile_function(X=(y - model_prediction))
@@ -190,7 +190,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        pen = lambda_param * cp.sum_squares(beta_var)
+        pen = lambda_param * cp.norm2(beta_var)
         return pen
 
     def _lasso(
@@ -740,7 +740,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         individual_weights_param = cp.Parameter(
             len(self.individual_weights), nonneg=True, value=self.individual_weights
         )
-        pen = lambda_param * cp.sum_squares(
+        pen = lambda_param * cp.norm2(
             cp.multiply(individual_weights_param, beta_var)
         )
         return pen
