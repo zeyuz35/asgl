@@ -126,7 +126,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
 
     def _define_objective_function(
-        self, y: np.ndarray, model_prediction: cp.Expression
+        self, y: ArrayOrSparse, model_prediction: cp.Expression
     ) -> cp.Expression:
         # Define the objective function based on the problem to solve
         if self.model == "lm":
@@ -236,11 +236,16 @@ class BaseModel(BaseEstimator, RegressorMixin):
         return pen
 
     def _obtain_beta(
-        self, X: ArrayOrSparse, y: np.ndarray, group_index: Optional[Sequence[int]]
+        self, X: ArrayOrSparse, y: ArrayOrSparse, group_index: Optional[Sequence[int]]
     ) -> Tuple[np.ndarray, np.ndarray]:
         n = X.shape[0]
-        m = X.shape[1]
-        beta_var = cp.Variable(m)
+        mx = X.shape[1]
+        # Ensure y is 2D for CVXPY operations
+        y_was_1d = y.ndim == 1
+        if y_was_1d:
+            y = y.reshape(-1, 1)
+        my = y.shape[1]
+        beta_var = cp.Variable((mx, my))
         intercept_var = cp.Variable() if self.fit_intercept else 0
         # wrap the X in a constant to avoid issues with sparse matrices in cvxpy expressions
         X_constant = cp.Constant(X)
@@ -258,7 +263,13 @@ class BaseModel(BaseEstimator, RegressorMixin):
             v = cp.Variable(n, nonneg=True)
 
             # equality constraints: y - pred == u - v
-            constraints = [y - pred == u - v]
+            # Reshape pred to match y shape for constraint
+            if my == 1:
+                # When single output, pred is (n, 1), reshape to (n,)
+                pred_reshaped = cp.reshape(pred, (n,))
+                constraints = [y.ravel() - pred_reshaped == u - v]
+            else:
+                constraints = [y - pred == u - v]
 
             objective = self._define_quantile_objective(n, self.quantile, u, v)
 
@@ -283,19 +294,28 @@ class BaseModel(BaseEstimator, RegressorMixin):
         if (beta_sol is None) or (intercept_sol is None):
             raise ValueError("CVXPY optimization failed to find a solution")
         beta_sol[np.abs(beta_sol) < self.tol] = 0
-        beta_sol = np.ravel(beta_sol)  # Ensure it is 1D
+        # Flatten beta if y was originally 1D
+        if y_was_1d:
+            beta_sol = beta_sol.ravel()
         return intercept_sol, beta_sol
 
     def fit(
         self,
         X: ArrayOrSparse,
-        y: np.ndarray,
+        y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
         self.feature_names_in_ = None
         if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
             self.feature_names_in_ = np.asarray(X.columns, dtype=object)
-        X, y = check_X_y(X, y, accept_sparse=True, y_numeric=True, ensure_min_samples=2)
+        X, y = check_X_y(
+            X,
+            y,
+            accept_sparse=True,
+            y_numeric=True,
+            ensure_min_samples=2,
+            multi_output=True,
+        )
         self.n_features_in_ = X.shape[1]
         self._check_attributes()
         # Check binary y
@@ -433,7 +453,7 @@ class AdaptiveWeights:
         self.verbose = verbose
         self.canon_backend = canon_backend
 
-    def _wpca_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wpca_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Weights based on the first principal component
         """
@@ -442,7 +462,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(pca.components_).ravel()
         return tmp_weight
 
-    def _wpca_pct(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wpca_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Weights based on principal component analysis
         """
@@ -467,7 +487,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(np.dot(p, beta_sol)).ravel()
         return tmp_weight
 
-    def _wpls_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wpls_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Weights based on the first partial least squares component
         """
@@ -476,7 +496,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(pls.x_rotations_).ravel()
         return tmp_weight
 
-    def _wpls_pct(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wpls_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Weights based on partial least squares
         """
@@ -499,7 +519,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(np.asarray(pls.coef_).ravel())
         return tmp_weight
 
-    def _wsparse_pca(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wsparse_pca(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Weights based on sparse principal component analysis.
         """
@@ -540,7 +560,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol)).ravel()
         return tmp_weight
 
-    def _wunpenalized(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wunpenalized(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         """
         Only for low dimensional frameworks. Weights based on an unpenalized regression model
         """
@@ -557,7 +577,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(unpenalized_model.coef_)
         return tmp_weight
 
-    def _wlasso(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wlasso(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         lasso_model = BaseModel(
             model=self.model,
             penalization="lasso",
@@ -572,7 +592,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(lasso_model.coef_)
         return tmp_weight
 
-    def _wridge(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
+    def _wridge(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
         ridge_model = BaseModel(
             model=self.model,
             penalization="ridge",
@@ -596,10 +616,17 @@ class AdaptiveWeights:
     def fit_weights(
         self,
         X: ArrayOrSparse,
-        y: np.ndarray,
+        y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
-        X, y = check_X_y(X, y, accept_sparse=True, y_numeric=True, ensure_min_samples=2)
+        X, y = check_X_y(
+            X,
+            y,
+            accept_sparse=True,
+            y_numeric=True,
+            ensure_min_samples=2,
+            multi_output=True,
+        )
         bool_individual, bool_group = self._check_type_penalization()
         if bool_group and group_index is None:
             raise ValueError(
@@ -829,7 +856,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     def fit(
         self,
         X: ArrayOrSparse,
-        y: np.ndarray,
+        y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
         self._check_attributes()

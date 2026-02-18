@@ -136,3 +136,4 @@ dmypy.json
 README.Rmd
 .Rhistory
 deprecated_tests/
+*.code-workspace
