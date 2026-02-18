@@ -411,8 +411,10 @@ class AdaptiveWeights:
         spca_ridge_alpha: float = 1e-2,
         individual_weights=None,
         group_weights=None,
+        solver: str = "CLARABEL",
         weight_tol: float = 1e-4,
         verbose: bool = False,
+        canon_backend: str = "CPP",
     ):
         self.model = model
         self.penalization = penalization
@@ -426,8 +428,10 @@ class AdaptiveWeights:
         self.spca_ridge_alpha = spca_ridge_alpha
         self.individual_weights = individual_weights
         self.group_weights = group_weights
+        self.solver = solver
         self.weight_tol = weight_tol
         self.verbose = verbose
+        self.canon_backend = canon_backend
 
     def _wpca_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
@@ -453,6 +457,9 @@ class AdaptiveWeights:
             penalization=None,
             fit_intercept=True,
             quantile=self.quantile,
+            solver=self.solver,
+            verbose=self.verbose,
+            canon_backend=self.canon_backend,
         )
         unpenalized_model.fit(X=t, y=y)
         beta_sol = unpenalized_model.coef_
@@ -523,6 +530,9 @@ class AdaptiveWeights:
             penalization=None,
             fit_intercept=True,
             quantile=self.quantile,
+            solver=self.solver,
+            verbose=self.verbose,
+            canon_backend=self.canon_backend,
         )
         unpenalized_model.fit(X=t[:, 0:n_comp], y=y)
         beta_sol = unpenalized_model.coef_
@@ -539,7 +549,9 @@ class AdaptiveWeights:
             penalization=None,
             fit_intercept=True,
             quantile=self.quantile,
+            solver=self.solver,
             verbose=self.verbose,
+            canon_backend=self.canon_backend,
         )
         unpenalized_model.fit(X=X, y=y)
         tmp_weight = np.abs(unpenalized_model.coef_)
@@ -552,7 +564,9 @@ class AdaptiveWeights:
             lambda1=self.lambda1_weights,
             fit_intercept=True,
             quantile=self.quantile,
+            solver=self.solver,
             verbose=self.verbose,
+            canon_backend=self.canon_backend,
         )
         lasso_model.fit(X=X, y=y)
         tmp_weight = np.abs(lasso_model.coef_)
@@ -565,7 +579,9 @@ class AdaptiveWeights:
             lambda1=self.lambda1_weights,
             fit_intercept=True,
             quantile=self.quantile,
+            solver=self.solver,
             verbose=self.verbose,
+            canon_backend=self.canon_backend,
         )
         ridge_model.fit(X=X, y=y)
         tmp_weight = np.abs(ridge_model.coef_)
