@@ -48,6 +48,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         solver: str = "CLARABEL",
         tol: float = 1e-3,
         verbose: bool = False,
+        canon_backend: str = "CPP",
     ):
         self.model = model
         self.penalization = penalization
@@ -58,6 +59,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         self.solver = solver
         self.tol = tol
         self.verbose = verbose
+        self.canon_backend = canon_backend
 
     @property
     def _estimator_type(self):
@@ -147,7 +149,11 @@ class BaseModel(BaseEstimator, RegressorMixin):
             self.solver if self.solver != "default" else None
         )  # Let cp choose default
         try:
-            problem.solve(solver=chosen_solver, verbose=self.verbose)
+            problem.solve(
+                solver=chosen_solver,
+                verbose=self.verbose,
+                canon_backend=self.canon_backend,
+            )
         except (ValueError, cp.error.SolverError, cp.error.DCPError):
             warnings.warn(
                 f"Default solver {self.solver} failed. Using alternative options from {solver_options}",
@@ -158,7 +164,11 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 solver_options.remove(chosen_solver)  # Skip the one that already failed
             for alt_solver in solver_options:
                 try:
-                    problem.solve(solver=alt_solver, verbose=self.verbose)
+                    problem.solve(
+                        solver=alt_solver,
+                        verbose=self.verbose,
+                        canon_backend=self.canon_backend,
+                    )
                     if "optimal" in problem.status.lower():
                         warnings.warn(
                             f"Successfully solved with alternative solver: {alt_solver}",
@@ -709,6 +719,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         weight_tol: float = 1e-4,
         tol: float = 1e-3,
         verbose: bool = False,
+        canon_backend: str = "CPP",
     ):
         super().__init__(
             model=model,
@@ -719,6 +730,7 @@ class Regressor(BaseModel, AdaptiveWeights):
             alpha=alpha,
             solver=solver,
             tol=tol,
+            canon_backend=canon_backend,
         )
         self.weight_technique = weight_technique
         self.individual_power_weight = individual_power_weight
@@ -730,7 +742,6 @@ class Regressor(BaseModel, AdaptiveWeights):
         self.individual_weights = individual_weights
         self.group_weights = group_weights
         self.weight_tol = weight_tol
-        self.verbose = verbose
 
     # Penalized problems
     def _aridge(
