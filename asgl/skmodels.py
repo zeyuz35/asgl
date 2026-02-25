@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Optional, Tuple
+from typing import Sequence, Optional, Tuple, Union
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
 import cvxpy as cp
 import numpy as np
@@ -45,7 +45,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         fit_intercept: bool = True,
         lambda1: float = 0.1,
         alpha: float = 0.5,
-        solver: str = "CLARABEL",
+        solver: Union[str, Sequence[str]] = "CLARABEL",
         tol: float = 1e-3,
         verbose: bool = False,
         canon_backend: str = "CPP",
@@ -143,41 +143,76 @@ class BaseModel(BaseEstimator, RegressorMixin):
             raise ValueError("Invalid value for model parameter.")
 
     def _solve_cp_problem(self, problem: cp.Problem) -> None:
-        # Solve a cvxpy problem
-        solver_options = list(cp.installed_solvers())
-        chosen_solver = (
-            self.solver if self.solver != "default" else None
-        )  # Let cp choose default
-        try:
-            problem.solve(
-                solver=chosen_solver,
-                verbose=self.verbose,
-                canon_backend=self.canon_backend,
-            )
-        except (ValueError, cp.error.SolverError, cp.error.DCPError):
-            warnings.warn(
-                f"Default solver {self.solver} failed. Using alternative options from {solver_options}",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            if chosen_solver in solver_options:
-                solver_options.remove(chosen_solver)  # Skip the one that already failed
-            for alt_solver in solver_options:
+        # Normalise solver to a list of strings; "default" means let cp choose
+        if isinstance(self.solver, str):
+            requested_solvers = [self.solver]
+        else:
+            requested_solvers = list(self.solver)
+
+        installed_solvers = sorted(cp.installed_solvers())
+        failed_solvers: set = set()
+        solved = False
+
+        # --- Phase 1: try each solver in the user-specified sequence ---
+        for solver_name in requested_solvers:
+            # "default" means pass solver=None so cvxpy picks its own default
+            cp_solver = None if solver_name == "default" else solver_name
+            try:
+                problem.solve(
+                    solver=cp_solver,
+                    verbose=self.verbose,
+                    canon_backend=self.canon_backend,
+                )
+                if problem.status is not None and "optimal" in problem.status.lower():
+                    solved = True
+                    break
+                else:
+                    # Solved without exception but status is not optimal
+                    warnings.warn(
+                        f"Solver {solver_name} returned status '{problem.status}'. Trying next solver.",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+                    failed_solvers.add(solver_name)
+            except (ValueError, cp.error.SolverError, cp.error.DCPError):
+                warnings.warn(
+                    f"Solver {solver_name} failed. Trying next solver.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+                failed_solvers.add(solver_name)
+
+        # --- Phase 2: fall back to remaining installed solvers not yet tried ---
+        if not solved:
+            remaining = [s for s in installed_solvers if s not in failed_solvers
+                         and s not in requested_solvers]
+            if remaining:
+                warnings.warn(
+                    f"Requested solver(s) {requested_solvers} failed. "
+                    f"Trying remaining installed solvers: {remaining}",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            for alt_solver in remaining:
                 try:
                     problem.solve(
                         solver=alt_solver,
                         verbose=self.verbose,
                         canon_backend=self.canon_backend,
                     )
-                    if "optimal" in problem.status.lower():
+                    if problem.status is not None and "optimal" in problem.status.lower():
                         warnings.warn(
-                            f"Successfully solved with alternative solver: {alt_solver}",
+                            f"Successfully solved with fallback solver: {alt_solver}",
                             RuntimeWarning,
                             stacklevel=2,
                         )
+                        solved = True
                         break
+                    else:
+                        failed_solvers.add(alt_solver)
                 except (ValueError, cp.error.SolverError, cp.error.DCPError):
-                    pass
+                    failed_solvers.add(alt_solver)
+
         if (
             problem.status is None
             or "infeasible" in problem.status.lower()
@@ -431,7 +466,7 @@ class AdaptiveWeights:
         spca_ridge_alpha: float = 1e-2,
         individual_weights=None,
         group_weights=None,
-        solver: str = "CLARABEL",
+        solver: Union[str, Sequence[str]] = "CLARABEL",
         weight_tol: float = 1e-4,
         verbose: bool = False,
         canon_backend: str = "CPP",
@@ -781,7 +816,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         fit_intercept: bool = True,
         lambda1: float = 0.1,
         alpha: float = 0.5,
-        solver: str = "default",
+        solver: Union[str, Sequence[str]] = "default",
         weight_technique: str = "pca_pct",
         individual_power_weight: float = 1,
         group_power_weight: float = 1,
