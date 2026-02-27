@@ -755,8 +755,10 @@ class Regressor(BaseModel, AdaptiveWeights):
     alpha: float, default=0.5
         Constant that performs tradeoff between lasso and group lasso in sgl and asgl penalizations.
         ``alpha=1`` enforces a lasso while ``alpha=0`` enforces a group lasso.
-    solver: str, default='CLARABEL'
+    solver: str or sequence of str, default='CLARABEL'
         Solver to be used by cvxpy. Default uses open source convex programming solver CLARABEL.
+        If a sequence of solvers is provided, they will be tried in order. If the requested solver(s) fail
+        or return a non-optimal status, the model will automatically fall back to other installed solvers.
         Users can check available solvers via the command `cp.installed_solvers()`.
     weight_technique: str, default='pca_pct'
         Weight technique used to fit the adaptive weights. Currently, accepts:
@@ -777,6 +779,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     variability_pct: float, default=0.9
         Percentage of variability explained by pca, pls and sparse_pca components. It only has effect if
         `` weight_technique`` is one of the following: 'pca_pct', 'pls_pct', 'sparse_pca'.
+        For sparse matrices, this value must be set to 1.
     lambda1_weights: float, default=0.1
         The value of the parameter ``lambda1`` used to solve the lasso model if ``weight_technique='lasso'`` or
         the ridge if ``weight_technique='ridge'``
@@ -928,6 +931,27 @@ class Regressor(BaseModel, AdaptiveWeights):
         y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
+        """
+        Fit the model to the data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target values. Multivariate regression is supported for 'lm' and 'qr' models,
+            allowing prediction of multiple outputs simultaneously.
+
+        group_index : array-like of shape (n_features,), default=None
+            Group index for each feature. Required for group-based penalizations
+            (gl, sgl, agl, asgl).
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
         self._check_attributes()
         if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
             self.fit_weights(X, y, group_index)

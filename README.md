@@ -108,10 +108,13 @@ The `Regressor` class includes the following list of parameters:
     penalizations in sgl and asgl penalizations. `alpha=1` enforces a
     lasso penalization while `alpha=0` enforces a group lasso
     penalization.
-- solver: str, default=‘default’
+- solver: str or sequence of str, default=‘default’
   - Solver to be used by `cvxpy`. Default uses optimal alternative
-    depending on the problem. Users can check available solvers via the
-    command `cvxpy.installed_solvers()`.
+    depending on the problem. If a sequence of solvers is provided,
+    they will be tried in order. If the requested solver(s) fail or
+    return a non-optimal status, the model will automatically fall back
+    to other installed solvers. Users can check available solvers via
+    the command `cvxpy.installed_solvers()`.
 - weight_technique: str, default=‘pca_pct’
   - Technique used to fit adaptive weights. Options include ‘pca_1’,
     ‘pca_pct’, ‘pls_1’, ‘pls_pct’, ‘lasso’, ‘ridge’, ‘unpenalized’, and
@@ -132,7 +135,7 @@ The `Regressor` class includes the following list of parameters:
   - Percentage of variability explained by PCA, PLS, and sparse PCA
     components. This parameter only has effect in adaptiv penalizations
     where `weight_technique` is equal to ‘pca_pct’, ‘pls_pct’ or
-    ‘sparse_pca’.
+    ‘sparse_pca’. For sparse matrices, this value must be set to 1.
 - lambda1_weights: float, default=0.1
   - The value of the parameter `lambda1` used to solve the lasso model
     if `weight_technique='lasso'`
@@ -163,6 +166,18 @@ The `Regressor` class includes the following list of parameters:
 - weight_tol: float, default=1e-4
   - Tolerance value used to avoid ZeroDivision errors when computing the
     weights.
+
+## Multivariate Regression
+
+The `asgl` package supports multivariate regression, allowing users to
+predict multiple output variables simultaneously. This feature is
+supported for both linear regression (`model='lm'`) and quantile
+regression (`model='qr'`).
+
+To perform multivariate regression, simply provide a target matrix `y`
+of shape `(n_samples, n_outputs)` when calling the `fit` method. The
+regressor will fit a model for each output variable while respecting
+the specified penalization structure.
 
 ## Examples
 
