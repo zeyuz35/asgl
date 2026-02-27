@@ -758,8 +758,9 @@ class Regressor(BaseModel, AdaptiveWeights):
     solver: str or sequence of str, default='CLARABEL'
         Solver to be used by cvxpy. Default uses open source convex programming solver CLARABEL.
         Other examples include 'OSQP', 'ECOS', 'SCS', 'MOSEK', 'GUROBI', etc.
-        If a sequence of solvers is provided, they will be tried in order. If the requested solver(s) fail
-        or return a non-optimal status, the model will automatically fall back to other installed solvers.
+        If a sequence of solvers is provided, they will be tried in order.
+        If the requested solver(s) fail or return a non-optimal status, the model will
+        automatically fall back to other installed solvers.
         Users can check available solvers via the command `cp.installed_solvers()`.
         See https://www.cvxpy.org/tutorial/advanced/index.html#choosing-a-solver for more details.
     weight_technique: str, default='pca_pct'
@@ -779,8 +780,9 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_power_weight: float, default=1
         Power at which the group weights are raised.
     variability_pct: float, default=0.9
-        Percentage of variability explained by pca, pls and sparse_pca components. It only has effect if
-        `` weight_technique`` is one of the following: 'pca_pct', 'pls_pct', 'sparse_pca'.
+        Percentage of variability explained by pca, pls and sparse_pca components.
+        It only has effect if `` weight_technique`` is one of the following:
+        'pca_pct', 'pls_pct', 'sparse_pca'.
         For sparse matrices, this value must be set to 1.
     lambda1_weights: float, default=0.1
         The value of the parameter ``lambda1`` used to solve the lasso model if ``weight_technique='lasso'`` or
@@ -804,9 +806,10 @@ class Regressor(BaseModel, AdaptiveWeights):
         Tolerance value used to avoid ZeroDivision errors when computing the weights.
     canon_backend: str, default='CPP'
         The canonicalization backend to use. Options are 'CPP' (default), 'SCIPY', and 'COO'.
-        'CPP' uses the original C++ implementation. 'SCIPY' uses a pure Python implementation
-        based on SciPy sparse matrices, which can be faster for problems with few parameters,
-        especially when vectorized. 'COO' is also available but is experimental.
+        'CPP' uses the original C++ implementation.
+        'SCIPY' uses a pure Python implementation based on SciPy sparse matrices, which can be
+        faster for problems with few parameters, especially when vectorized.
+        'COO' is also available but is experimental.
         See https://www.cvxpy.org/tutorial/advanced/index.html#canonicalization-backends
         for more details.
 
