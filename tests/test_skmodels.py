@@ -818,6 +818,22 @@ def test_errors():
                        match=f'The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.'):
         model.fit(X, y)
 
+def test_group_weights_validation():
+    # Synthetic data
+    X = np.random.randn(10, 5)
+    y = np.random.randn(10)
+    # 3 groups: 1, 2, 3
+    group_index = [1, 1, 2, 2, 3]
+
+    # mismatch: 2 weights for 3 groups
+    group_weights = np.array([1.0, 1.0])
+
+    model = Regressor(model='lm', penalization='agl', lambda1=0.1, group_weights=group_weights, solver='CLARABEL')
+
+    with pytest.raises(ValueError, match="Number of group weights does not match the number of groups in group_index"):
+        model.fit(X, y, group_index=group_index)
+
+
 # SKLEARN COMPATIBILITY -----------------------------------------------------------------------------------------------
 
 
