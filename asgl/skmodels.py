@@ -112,14 +112,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _quantile_function(self, X) -> cp.Expression:
         """cp quantile loss function."""
-        # return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
         # new implementation, should be more efficient avoiding abs
         q = float(self.quantile)
         return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
-
-    # def _define_quantile_objective(n, q, u, v):
-    #     # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
-    #     return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
 
     def _define_quantile_objective(self, n, q, u, v):
         # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
@@ -285,13 +280,6 @@ class BaseModel(BaseEstimator, RegressorMixin):
         # wrap the X in a constant to avoid issues with sparse matrices in cvxpy expressions
         X_constant = cp.Constant(X)
         pred = X_constant @ beta_var + intercept_var
-        # objective_function = self._define_objective_function(y, pred)
-        # # Handle unpenalized models
-        # if self.penalization is None:
-        #     problem = cp.Problem(cp.Minimize(objective_function))
-        # else:
-        #     pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
-        #     problem = cp.Problem(cp.Minimize(objective_function + pen))
         if self.model == "qr":
             # residual splitting variables (nonnegative)
             # For multi-output: u,v shape (n, my), for single output: (n,)
@@ -395,7 +383,6 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
         intercept = self.intercept_ if self.fit_intercept else 0
-        # predictions = np.dot(X, self.coef_) + intercept
         predictions = (
             X @ self.coef_ + intercept
             if sparse.issparse(X)

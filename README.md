@@ -417,7 +417,9 @@ distribute your version, but not profit from it.
 ### 2.1.4
 
 The package has been updated to fullfill `scikit-learn`’s requirements
-in regards to estimator class definition
+in regards to estimator class definition. Also, the quantile loss function
+implementation has been optimized to improve efficiency by avoiding
+absolute value operations.
 
 ### 2.1.3
 
