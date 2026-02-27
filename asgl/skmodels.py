@@ -129,7 +129,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         # new implementation, should be more efficient avoiding abs
         # Uses a residual splitting approach
         q = float(self.quantile)
-        return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
+        return cp.sum(0.5 * cp.abs(X) + (q - 0.5) * X)
 
     def _define_quantile_objective(self, n, q, u, v):
         # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
