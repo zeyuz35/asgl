@@ -64,7 +64,7 @@ def test_logistic_classifier_api(penalty):
     data = np.loadtxt('data_logit.csv', delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1].astype('int')
-    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2)
+    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2, solver="CLARABEL")
     clf.fit(X, y)
 
     proba = clf.predict_proba(X)
@@ -869,3 +869,42 @@ def test_grid_search():
 
 if __name__ == "__main__":
     pytest.main()
+
+# ------------------------------------------------------------------
+# Testing decision_function
+# ------------------------------------------------------------------
+
+def test_decision_function_not_fitted():
+    from sklearn.exceptions import NotFittedError
+    from sklearn.datasets import make_regression
+
+    X, _ = make_regression(n_samples=100, n_features=10, random_state=42)
+    model = Regressor(model='lm', penalization=None)
+
+    with pytest.raises(NotFittedError):
+        model.decision_function(X)
+
+@pytest.mark.parametrize("model_type", ["lm", "qr", "logit"])
+def test_decision_function_shape_and_sparse(model_type):
+    from sklearn.datasets import make_regression, make_classification
+    from scipy import sparse
+
+    if model_type in ["lm", "qr"]:
+        X, y = make_regression(n_samples=100, n_features=10, random_state=42)
+    else:
+        X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+
+    model = Regressor(model=model_type, penalization=None, solver='CLARABEL')
+    model.fit(X, y)
+
+    # Test dense shape
+    decision_dense = model.decision_function(X)
+    assert decision_dense.shape == (100,)
+
+    # Test sparse shape
+    X_sparse = sparse.csr_matrix(X)
+    decision_sparse = model.decision_function(X_sparse)
+    assert decision_sparse.shape == (100,)
+
+    # Test both return same results
+    np.testing.assert_allclose(decision_dense, decision_sparse)
