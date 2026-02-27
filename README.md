@@ -110,11 +110,14 @@ The `Regressor` class includes the following list of parameters:
     penalization.
 - solver: str or sequence of str, default=‘default’
   - Solver to be used by `cvxpy`. Default uses optimal alternative
-    depending on the problem. If a sequence of solvers is provided,
-    they will be tried in order. If the requested solver(s) fail or
-    return a non-optimal status, the model will automatically fall back
-    to other installed solvers. Users can check available solvers via
-    the command `cvxpy.installed_solvers()`.
+    depending on the problem. Other examples include ‘OSQP’, ‘ECOS’,
+    ‘SCS’, ‘MOSEK’, ‘GUROBI’, etc. If a sequence of solvers is
+    provided, they will be tried in order. If the requested solver(s)
+    fail or return a non-optimal status, the model will automatically
+    fall back to other installed solvers. Users can check available
+    solvers via the command `cvxpy.installed_solvers()`. See
+    [CVXPY Choosing a solver](https://www.cvxpy.org/tutorial/advanced/index.html#choosing-a-solver)
+    for more details.
 - weight_technique: str, default=‘pca_pct’
   - Technique used to fit adaptive weights. Options include ‘pca_1’,
     ‘pca_pct’, ‘pls_1’, ‘pls_pct’, ‘lasso’, ‘ridge’, ‘unpenalized’, and

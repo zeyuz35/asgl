@@ -757,9 +757,11 @@ class Regressor(BaseModel, AdaptiveWeights):
         ``alpha=1`` enforces a lasso while ``alpha=0`` enforces a group lasso.
     solver: str or sequence of str, default='CLARABEL'
         Solver to be used by cvxpy. Default uses open source convex programming solver CLARABEL.
+        Other examples include 'OSQP', 'ECOS', 'SCS', 'MOSEK', 'GUROBI', etc.
         If a sequence of solvers is provided, they will be tried in order. If the requested solver(s) fail
         or return a non-optimal status, the model will automatically fall back to other installed solvers.
         Users can check available solvers via the command `cp.installed_solvers()`.
+        See https://www.cvxpy.org/tutorial/advanced/index.html#choosing-a-solver for more details.
     weight_technique: str, default='pca_pct'
         Weight technique used to fit the adaptive weights. Currently, accepts:
             - pca_1: Builds the weights using the first component from PCA.
