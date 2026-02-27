@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Optional, Tuple, Union
+from typing import Sequence, Optional, Tuple, Union, Dict
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
 import cvxpy as cp
 import numpy as np
@@ -30,6 +30,20 @@ warnings.filterwarnings(
     category=UserWarning,
     message="You are solving a parameterized problem that is not DPP",
 )
+
+
+def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
+    """
+    Efficiently computes group sizes and indices for each group.
+    """
+    argsort_indices = np.argsort(group_index, kind='mergesort')
+    sorted_group_index = group_index[argsort_indices]
+    unique_groups, group_starts, group_counts = np.unique(sorted_group_index, return_index=True, return_counts=True)
+    indices_per_group = {
+        g: argsort_indices[start : start + count]
+        for g, start, count in zip(unique_groups, group_starts, group_counts)
+    }
+    return unique_groups, group_counts, indices_per_group
 
 
 class BaseModel(BaseEstimator, RegressorMixin):
@@ -243,8 +257,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _gl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
-        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
+        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -255,8 +268,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
-        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
-        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
+        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -692,10 +704,10 @@ class AdaptiveWeights:
             if tmp_weight is None:
                 tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
             group_index = np.asarray(group_index, dtype=int)
-            unique_index = np.unique(group_index)
+            unique_groups, group_counts, indices_per_group = _get_group_info(group_index)
             group_weights = []
-            for g in unique_index:
-                mask = group_index == g
+            for g in unique_groups:
+                mask = indices_per_group[g]
                 norm = np.linalg.norm(tmp_weight[mask], ord=2)
                 group_weights.append(
                     1.0 / (np.power(norm, self.group_power_weight) + self.weight_tol)
@@ -869,8 +881,7 @@ class Regressor(BaseModel, AdaptiveWeights):
 
     def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
-        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
+        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
@@ -891,8 +902,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         weights = np.asarray(self.individual_weights).reshape(-1, 1)
         individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
-        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
-        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
+        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
