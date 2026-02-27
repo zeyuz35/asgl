@@ -683,29 +683,43 @@ class AdaptiveWeights:
                 "A group penalisation was requested but `group_index` is missing."
             )
         tmp_weight: Optional[np.ndarray] = None
-        if bool_individual and self.individual_weights is None:
-            tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
-            self.individual_weights = 1 / (
-                tmp_weight**self.individual_power_weight + self.weight_tol
-            )
-        if bool_group and self.group_weights is None:
-            if tmp_weight is None:
+
+        # Determine individual weights
+        if bool_individual:
+            if self.individual_weights is None:
+                # Calculate weights if not provided
                 tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
-            group_index = np.asarray(group_index, dtype=int)
-            unique_index = np.unique(group_index)
-            group_weights = []
-            for g in unique_index:
-                mask = group_index == g
-                norm = np.linalg.norm(tmp_weight[mask], ord=2)
-                group_weights.append(
-                    1.0 / (np.power(norm, self.group_power_weight) + self.weight_tol)
+                self.individual_weights_ = 1 / (
+                    tmp_weight**self.individual_power_weight + self.weight_tol
                 )
-            self.group_weights = np.asarray(group_weights)
-        if bool_individual and (len(self.individual_weights) != X.shape[1]):
+            else:
+                # Use provided weights
+                self.individual_weights_ = np.asarray(self.individual_weights)
+
+        # Determine group weights
+        if bool_group:
+            if self.group_weights is None:
+                if tmp_weight is None:
+                    tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
+                group_index = np.asarray(group_index, dtype=int)
+                unique_index = np.unique(group_index)
+                group_weights = []
+                for g in unique_index:
+                    mask = group_index == g
+                    norm = np.linalg.norm(tmp_weight[mask], ord=2)
+                    group_weights.append(
+                        1.0
+                        / (np.power(norm, self.group_power_weight) + self.weight_tol)
+                    )
+                self.group_weights_ = np.asarray(group_weights)
+            else:
+                self.group_weights_ = np.asarray(self.group_weights)
+
+        if bool_individual and (len(self.individual_weights_) != X.shape[1]):
             raise ValueError(
                 "Number of individual weights does not match the number of columns in X"
             )
-        if bool_group and (len(self.group_weights) != len(np.unique(group_index))):
+        if bool_group and (len(self.group_weights_) != len(np.unique(group_index))):
             raise ValueError(
                 "Number of group weights does not match the number of groups in group_index"
             )
@@ -849,7 +863,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
         individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         pen = lambda_param * cp.sum_squares(
             cp.multiply(individual_weights_param, beta_var)
@@ -862,7 +876,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
         individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         pen = lambda_param * cp.norm1(cp.multiply(individual_weights_param, beta_var))
         return pen
@@ -873,7 +887,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
+            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
         )
         mx, my = beta_var.shape
         # For each group, compute the norm of all features in that group across all outputs
@@ -888,14 +902,14 @@ class Regressor(BaseModel, AdaptiveWeights):
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
         mx, my = beta_var.shape
         # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights).reshape(-1, 1)
+        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
         individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
         unique_groups, group_sizes = np.unique(group_index, return_counts=True)
         indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
+            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
         )
         # For each group, compute the norm of all features in that group across all outputs
         group_norms = cp.hstack(
