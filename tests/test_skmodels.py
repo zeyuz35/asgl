@@ -818,6 +818,20 @@ def test_errors():
                        match=f'The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.'):
         model.fit(X, y)
 
+
+def test_negative_group_index_raises_error():
+    # Generate dummy data
+    X = np.random.rand(10, 5)
+    y = np.random.rand(10)
+
+    # Create a group_index with a negative value
+    group_index = np.array([1, 1, 2, 2, -1])
+
+    model = Regressor(model='lm', penalization='gl', lambda1=0.1)
+
+    with pytest.raises(ValueError, match="group_index must be a positive integer array. Negative values detected"):
+        model.fit(X, y, group_index=group_index)
+
 # SKLEARN COMPATIBILITY -----------------------------------------------------------------------------------------------
 
 
