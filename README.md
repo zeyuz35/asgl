@@ -188,8 +188,9 @@ regression (`model='qr'`).
 
 To perform multivariate regression, simply provide a target matrix `y`
 of shape `(n_samples, n_outputs)` when calling the `fit` method. The
-regressor will fit a model for each output variable while respecting
-the specified penalization structure.
+regressor fits a model for all output variables jointly, which is
+particularly useful when using group penalizations that couple the
+selection of features across multiple outputs.
 
 ## Examples
 

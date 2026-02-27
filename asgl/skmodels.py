@@ -950,7 +950,8 @@ class Regressor(BaseModel, AdaptiveWeights):
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Multivariate regression is supported for 'lm' and 'qr' models,
-            allowing prediction of multiple outputs simultaneously.
+            allowing simultaneous prediction of multiple outputs. The model is fitted
+            jointly for all output variables.
 
         group_index : array-like of shape (n_features,), default=None
             Group index for each feature. Required for group-based penalizations
