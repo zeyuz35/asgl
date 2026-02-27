@@ -733,6 +733,8 @@ class Regressor(BaseModel, AdaptiveWeights):
             - 'lm': linear regression models.
             - 'qr': quantile regression models.
             - 'logit': logistic regression for binary classification, output binary classification.
+        Both 'lm' and 'qr' models support multivariate regression (multiple outputs),
+        allowing for simultaneous fitting and coupled feature selection with grouped penalizations.
     penalization: str or None, default = 'lasso'
         Penalization to use. Currently, accepts:
             - None: unpenalized model.
@@ -757,6 +759,10 @@ class Regressor(BaseModel, AdaptiveWeights):
         ``alpha=1`` enforces a lasso while ``alpha=0`` enforces a group lasso.
     solver: str, default='CLARABEL'
         Solver to be used by cvxpy. Default uses open source convex programming solver CLARABEL.
+        If a list is provided, the model will try each solver in order.
+        If the specified solver(s) fail, the model falls back to other installed solvers.
+        See `CVXPY Solvers <https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options>`_
+        for more information.
         Users can check available solvers via the command `cp.installed_solvers()`.
     weight_technique: str, default='pca_pct'
         Weight technique used to fit the adaptive weights. Currently, accepts:
@@ -777,6 +783,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     variability_pct: float, default=0.9
         Percentage of variability explained by pca, pls and sparse_pca components. It only has effect if
         `` weight_technique`` is one of the following: 'pca_pct', 'pls_pct', 'sparse_pca'.
+        **Note:** For sparse input matrices, this value must be set to 1.
     lambda1_weights: float, default=0.1
         The value of the parameter ``lambda1`` used to solve the lasso model if ``weight_technique='lasso'`` or
         the ridge if ``weight_technique='ridge'``
@@ -797,6 +804,11 @@ class Regressor(BaseModel, AdaptiveWeights):
         be 0.
     weight_tol: float, default=1e-4
         Tolerance value used to avoid ZeroDivision errors when computing the weights.
+    canon_backend: str, default='CPP'
+        Canonicalization backend to be used by ``cvxpy``.
+        Options include 'CPP' (default), 'SCIPY', and 'COO'.
+        See `CVXPY Canonicalization Backends <https://www.cvxpy.org/tutorial/advanced/index.html#canonicalization-backends>`_
+        for more information.
 
     Attributes
     ----------
