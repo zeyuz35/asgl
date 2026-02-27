@@ -4,9 +4,16 @@ import cvxpy as cp
 from asgl import Regressor
 from sklearn.datasets import make_regression
 
+
 def generate_data(n_samples=100, n_features=10, noise=0.1, random_state=42):
-    X, y = make_regression(n_samples=n_samples, n_features=n_features, noise=noise, random_state=random_state)
+    X, y = make_regression(
+        n_samples=n_samples,
+        n_features=n_features,
+        noise=noise,
+        random_state=random_state,
+    )
     return X, y
+
 
 def test_solver_fallback_with_invalid_solver():
     X, y = generate_data()
@@ -22,8 +29,9 @@ def test_solver_fallback_with_invalid_solver():
 
     assert model.is_fitted_
     # Ensure the used solver is one of the valid ones, not ASD
-    assert model.solver_stats_['solver_name'] in ["OSQP", "SCS", "CLARABEL"]
-    assert model.solver_stats_['solver_name'] != "ASD"
+    assert model.solver_stats_["solver_name"] in ["OSQP", "SCS", "CLARABEL"]
+    assert model.solver_stats_["solver_name"] != "ASD"
+
 
 def test_solver_fallback_all_requested_fail():
     X, y = generate_data()
@@ -38,7 +46,7 @@ def test_solver_fallback_all_requested_fail():
 
     assert model.is_fitted_
     # It should have fallen back to an installed solver
-    assert model.solver_stats_['solver_name'] in cp.installed_solvers()
+    assert model.solver_stats_["solver_name"] in cp.installed_solvers()
 
     # Check for the sequence of warnings
     warnings_list = [str(w.message) for w in record]
@@ -47,7 +55,10 @@ def test_solver_fallback_all_requested_fail():
     assert any("Solver ASD failed. Trying next solver." in w for w in warnings_list)
 
     # 2. All requested failed, trying remaining
-    assert any("Requested solver(s) ['ASD'] failed. Trying remaining installed solvers" in w for w in warnings_list)
+    assert any(
+        "Requested solver(s) ['ASD'] failed. Trying remaining installed solvers" in w
+        for w in warnings_list
+    )
 
     # 3. Successfully solved with fallback
     assert any("Successfully solved with fallback solver" in w for w in warnings_list)
