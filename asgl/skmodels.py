@@ -113,6 +113,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _quantile_function(self, X) -> cp.Expression:
         """cp quantile loss function."""
         # new implementation, should be more efficient avoiding abs
+        # Uses a residual splitting approach
         q = float(self.quantile)
         return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
 
