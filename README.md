@@ -13,11 +13,13 @@ Version](https://img.shields.io/badge/version-2.1.4-blue.svg)](https://cran.r-pr
 ## Fork of original asgl to incorporate sparse matrices
 
 This is a fork of asgl to incorporate sparse matrices.
+In addition to sparse matrix support, several other key features have been added:
 
-The changes are done in a somewhat janky way, as python is not my main
-language.
-In particular, for sparse matrices, `variability_pct` must be set to 1.
+*   **Multivariate Regression:** Both linear ('lm') and quantile ('qr') models now support multiple outputs (Multivariate Y), allowing for simultaneous fitting and coupled feature selection with grouped penalizations.
+*   **Solver Fallbacks:** The `solver` parameter now accepts a list of solvers. If the primary solver fails, the model will automatically try subsequent solvers in the list or fall back to other installed CVXPY solvers.
+*   **Canonicalization Backends:** A new `canon_backend` parameter allows users to choose the CVXPY canonicalization backend (e.g., 'CPP', 'SCIPY', 'COO') for better performance or compatibility.
 
+**Note:** For sparse matrices, `variability_pct` must be set to 1.
 Hence, a new `test_skmodels_sparse.py` specifically for sparse matrices has
 the `variability_pct=1`.
 
