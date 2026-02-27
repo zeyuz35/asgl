@@ -166,6 +166,15 @@ The `Regressor` class includes the following list of parameters:
 - weight_tol: float, default=1e-4
   - Tolerance value used to avoid ZeroDivision errors when computing the
     weights.
+- canon_backend: str, default=‘CPP’
+  - The canonicalization backend to use. Options are ‘CPP’ (default),
+    ‘SCIPY’, and 'COO'. ‘CPP’ uses the original C++ implementation.
+    ‘SCIPY’ uses a pure Python implementation based on SciPy sparse
+    matrices, which can be faster for problems with few parameters,
+    especially when vectorized. 'COO' is also available but is
+    experimental. See
+    [CVXPY canonicalization backends](https://www.cvxpy.org/tutorial/advanced/index.html#canonicalization-backends)
+    for more details.
 
 ## Multivariate Regression
 
