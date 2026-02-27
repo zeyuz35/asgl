@@ -86,10 +86,10 @@ The `Regressor` class includes the following list of parameters:
 - model: str, default=‘lm’
   - Type of model to fit.
     Options are ‘lm’ (linear regression), ‘qr’ (quantile regression),
-    ‘logit’ (logistic regression for binary classification, output binary
-    classification), ‘logit_proba’ (logistic regression for binary
-    classification, output probability) and ‘logit_raw’ (logistic
-    regression for binary classification, output score before logistic).
+    and ‘logit’ (logistic regression for binary classification).
+    Both ‘lm’ and ‘qr’ models support multivariate regression (multiple outputs),
+    allowing for simultaneous fitting and coupled feature selection with
+    grouped penalizations.
 - penalization: str or None, default=‘lasso’
   - Type of penalization to use.
     Options are ‘lasso’, ‘ridge’, ‘gl’ (group lasso), ‘sgl’ (sparse group
@@ -109,11 +109,20 @@ The `Regressor` class includes the following list of parameters:
     penalizations in sgl and asgl penalizations.
     `alpha=1` enforces a lasso penalization while `alpha=0` enforces a
     group lasso penalization.
-- solver: str, default=‘default’
-  - Solver to be used by `cvxpy`.
+- solver: str or list of str, default=‘default’
+  - Solver(s) to be used by `cvxpy`.
     Default uses optimal alternative depending on the problem.
+    If a list is provided, the model will try each solver in order.
+    If the specified solver(s) fail, the model falls back to other installed solvers.
+    See [CVXPY Solvers](https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options)
+    for more information.
     Users can check available solvers via the
     command `cvxpy.installed_solvers()`.
+- canon_backend: str, default=‘CPP’
+  - Canonicalization backend to be used by `cvxpy`.
+    Options include ‘CPP’ (default), ‘SCIPY’, and ‘COO’.
+    See [CVXPY Canonicalization Backends](https://www.cvxpy.org/tutorial/advanced/index.html#canonicalization-backends)
+    for more information.
 - weight_technique: str, default=‘pca_pct’
   - Technique used to fit adaptive weights.
     Options include ‘pca_1’, ‘pca_pct’, ‘pls_1’, ‘pls_pct’, ‘lasso’,
@@ -136,6 +145,7 @@ The `Regressor` class includes the following list of parameters:
     components.
     This parameter only has effect in adaptiv penalizations where
     `weight_technique` is equal to ‘pca_pct’, ‘pls_pct’ or ‘sparse_pca’.
+    **Note:** For sparse input matrices, this value must be set to 1.
 - lambda1_weights: float, default=0.1
   - The value of the parameter `lambda1` used to solve the lasso model if
     `weight_technique='lasso'`

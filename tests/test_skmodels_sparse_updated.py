@@ -903,7 +903,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -933,7 +933,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -963,7 +963,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -993,7 +993,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1023,7 +1023,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1084,7 +1084,7 @@ def test_alasso_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
 
@@ -1121,7 +1121,7 @@ def test_alasso_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso qr failure for quantile 0.8, weight_technique="unpenalized",
+        err_msg='Adaptive lasso qr failure for quantile 0.8, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1150,7 +1150,7 @@ def test_alasso_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive lasso qr failure for quantile 0.2, weight_technique="unpenalized",
+        err_msg='Adaptive lasso qr failure for quantile 0.2, weight_technique="unpenalized"',
     )
 
 
@@ -1276,7 +1276,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1306,7 +1306,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1336,7 +1336,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1366,7 +1366,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1395,7 +1395,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1456,7 +1456,7 @@ def test_aridge_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
 
@@ -1578,7 +1578,7 @@ def test_agl_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive group lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive group lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
 
@@ -1616,7 +1616,7 @@ def test_agl_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive group lasso qr failure for quantile 0.8, weight_technique="unpenalized",
+        err_msg='Adaptive group lasso qr failure for quantile 0.8, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1646,7 +1646,7 @@ def test_agl_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive group lasso qr failure for quantile 0.2, weight_technique="unpenalized",
+        err_msg='Adaptive group lasso qr failure for quantile 0.2, weight_technique="unpenalized"',
     )
 
 
@@ -1773,7 +1773,7 @@ def test_asgl_lm():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive sparse group lasso lm failure for lambda=0.1, weight_technique="unpenalized",
+        err_msg='Adaptive sparse group lasso lm failure for lambda=0.1, weight_technique="unpenalized"',
     )
 
 
@@ -1812,7 +1812,7 @@ def test_asgl_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive sparse group lasso qr failure for quantile 0.8, weight_technique="unpenalized",
+        err_msg='Adaptive sparse group lasso qr failure for quantile 0.8, weight_technique="unpenalized"',
     )
 
     model = Regressor(
@@ -1843,7 +1843,7 @@ def test_asgl_qr():
             ]
         ),
         decimal=3,
-        err_msg='Adaptive sparse group lasso qr failure for quantile 0.2, weight_technique="unpenalized",
+        err_msg='Adaptive sparse group lasso qr failure for quantile 0.2, weight_technique="unpenalized"',
     )
 
 
