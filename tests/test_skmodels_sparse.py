@@ -132,7 +132,9 @@ def test_unpenalized_qr():
     X = sparse.csr_matrix(X)
     y = data[:, -1]
 
-    model = Regressor(model="qr", penalization=None, quantile=0.8, solver="CLARABEL")
+    model = Regressor(
+        model="qr", penalization=None, quantile=0.8, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -154,7 +156,9 @@ def test_unpenalized_qr():
         err_msg="Unpenalized qr failure for quantile 0.8",
     )
 
-    model = Regressor(model="qr", penalization=None, quantile=0.2, solver="CLARABEL")
+    model = Regressor(
+        model="qr", penalization=None, quantile=0.2, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -215,7 +219,9 @@ def test_lasso_lm():
     X = sparse.csr_matrix(X)
     y = data[:, -1]
 
-    model = Regressor(model="lm", penalization="lasso", lambda1=0, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="lasso", lambda1=0, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -237,7 +243,9 @@ def test_lasso_lm():
         err_msg="Lasso lm failure for lambda=0",
     )
 
-    model = Regressor(model="lm", penalization="lasso", lambda1=0.1, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="lasso", lambda1=0.1, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -267,7 +275,11 @@ def test_lasso_qr():
     y = data[:, -1]
 
     model = Regressor(
-        model="qr", penalization="lasso", quantile=0.8, lambda1=0, solver="CLARABEL"
+        model="qr",
+        penalization="lasso",
+        quantile=0.8,
+        lambda1=0,
+        solver="CLARABEL",
     )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
@@ -291,7 +303,11 @@ def test_lasso_qr():
     )
 
     model = Regressor(
-        model="qr", penalization="lasso", quantile=0.8, lambda1=0.1, solver="CLARABEL"
+        model="qr",
+        penalization="lasso",
+        quantile=0.8,
+        lambda1=0.1,
+        solver="CLARABEL",
     )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
@@ -315,7 +331,11 @@ def test_lasso_qr():
     )
 
     model = Regressor(
-        model="qr", penalization="lasso", quantile=0.2, lambda1=0.1, solver="CLARABEL"
+        model="qr",
+        penalization="lasso",
+        quantile=0.2,
+        lambda1=0.1,
+        solver="CLARABEL",
     )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
@@ -348,7 +368,9 @@ def test_ridge_lm():
     X = sparse.csr_matrix(X)
     y = data[:, -1]
 
-    model = Regressor(model="lm", penalization="ridge", lambda1=0, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="ridge", lambda1=0, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -370,7 +392,9 @@ def test_ridge_lm():
         err_msg="Ridge lm failure for lambda=0",
     )
 
-    model = Regressor(model="lm", penalization="ridge", lambda1=0.1, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="ridge", lambda1=0.1, solver="CLARABEL"
+    )
     model.fit(X, y)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -403,7 +427,9 @@ def test_gl_lm():
     y = data[:, -1]
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
-    model = Regressor(model="lm", penalization="gl", lambda1=0, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="gl", lambda1=0, solver="CLARABEL"
+    )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -425,7 +451,9 @@ def test_gl_lm():
         err_msg="Group lasso lm failure for lambda=0",
     )
 
-    model = Regressor(model="lm", penalization="gl", lambda1=0.1, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="gl", lambda1=0.1, solver="CLARABEL"
+    )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -456,7 +484,11 @@ def test_gl_qr():
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
     model = Regressor(
-        model="qr", penalization="gl", quantile=0.8, lambda1=0, solver="CLARABEL"
+        model="qr",
+        penalization="gl",
+        quantile=0.8,
+        lambda1=0,
+        solver="CLARABEL",
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -480,7 +512,11 @@ def test_gl_qr():
     )
 
     model = Regressor(
-        model="qr", penalization="gl", quantile=0.8, lambda1=0.1, solver="CLARABEL"
+        model="qr",
+        penalization="gl",
+        quantile=0.8,
+        lambda1=0.1,
+        solver="CLARABEL",
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -504,7 +540,11 @@ def test_gl_qr():
     )
 
     model = Regressor(
-        model="qr", penalization="gl", quantile=0.2, lambda1=0.1, solver="CLARABEL"
+        model="qr",
+        penalization="gl",
+        quantile=0.2,
+        lambda1=0.1,
+        solver="CLARABEL",
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -538,7 +578,9 @@ def test_sgl_lm():
     y = data[:, -1]
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
-    model = Regressor(model="lm", penalization="sgl", lambda1=0, solver="CLARABEL")
+    model = Regressor(
+        model="lm", penalization="sgl", lambda1=0, solver="CLARABEL"
+    )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
         model.coef_,
@@ -609,7 +651,11 @@ def test_sgl_lm():
     )
 
     model = Regressor(
-        model="lm", penalization="sgl", lambda1=0.1, alpha=0.5, solver="CLARABEL"
+        model="lm",
+        penalization="sgl",
+        lambda1=0.1,
+        alpha=0.5,
+        solver="CLARABEL",
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -641,7 +687,11 @@ def test_sgl_qr():
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
     model = Regressor(
-        model="qr", penalization="sgl", quantile=0.8, lambda1=0, solver="CLARABEL"
+        model="qr",
+        penalization="sgl",
+        quantile=0.8,
+        lambda1=0,
+        solver="CLARABEL",
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -1473,7 +1523,12 @@ def test_agl_lm():
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
     model = Regressor(
-        model="lm", penalization="agl", lambda1=0, weight_technique="unpenalized", solver="CLARABEL", variability_pct=1
+        model="lm",
+        penalization="agl",
+        lambda1=0,
+        weight_technique="unpenalized",
+        solver="CLARABEL",
+        variability_pct=1,
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -1663,7 +1718,12 @@ def test_asgl_lm():
     group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
     model = Regressor(
-        model="lm", penalization="asgl", lambda1=0, weight_technique="unpenalized", solver="CLARABEL", variability_pct=1
+        model="lm",
+        penalization="asgl",
+        lambda1=0,
+        weight_technique="unpenalized",
+        solver="CLARABEL",
+        variability_pct=1,
     )
     model.fit(X, y, group_index)
     np.testing.assert_array_almost_equal(
@@ -1869,7 +1929,7 @@ def test_errors():
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 
@@ -1917,7 +1977,11 @@ def test_grid_search():
     }
     gscv = GridSearchCV(model, param_grid=param_grid)
     gscv.fit(X, y, **{"group_index": group_index})
-    expected_output = {"alpha": 1, "lambda1": 0.01, "weight_technique": "unpenalized"}
+    expected_output = {
+        "alpha": 1,
+        "lambda1": 0.01,
+        "weight_technique": "unpenalized",
+    }
 
     # Assert that the dictionary contains the expected key-value pairs
     for key, value in gscv.best_params_.items():
