@@ -9,7 +9,7 @@ def test_group_weights_leakage():
     group_index = [0, 0, 1, 1]
 
     # Check group weights leakage (agl)
-    model = Regressor(model='lm', penalization='agl', weight_technique='pca_pct', lambda1=0.1)
+    model = Regressor(model='lm', penalization='agl', weight_technique='pca_pct', lambda1=0.1, solver='CLARABEL')
 
     model.fit(X1, y1, group_index=group_index)
     weights1 = model.group_weights_
@@ -28,7 +28,7 @@ def test_individual_weights_leakage():
     X1, y1 = make_regression(n_samples=10, n_features=4, noise=0.1, random_state=42)
 
     # Check individual weights leakage (alasso)
-    model = Regressor(model='lm', penalization='alasso', weight_technique='pca_pct', lambda1=0.1)
+    model = Regressor(model='lm', penalization='alasso', weight_technique='pca_pct', lambda1=0.1, solver='CLARABEL')
 
     model.fit(X1, y1)
     iweights1 = model.individual_weights_
