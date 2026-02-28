@@ -73,7 +73,7 @@ def test_logistic_classifier_api(penalty):
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1].astype("int")
-    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2)
+    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2, solver="SCS")
     clf.fit(X, y)
 
     proba = clf.predict_proba(X)
