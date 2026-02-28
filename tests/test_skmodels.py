@@ -27,6 +27,17 @@ def test_bad_constructor_arguments_raises(bad_kwargs):
 # ------------------------------------------------------------------
 # Regressor vs Classifier automatic tag / estimator type
 # ------------------------------------------------------------------
+def test_predict_proba_on_regressor_raises():
+    X = np.array([[1, 2], [3, 4]])
+
+    reg_lm = Regressor(model="lm")
+    with pytest.raises(AttributeError, match="predict_proba is not available when model is 'lm'. It is only available for classifier models."):
+        reg_lm.predict_proba(X)
+
+    reg_qr = Regressor(model="qr")
+    with pytest.raises(AttributeError, match="predict_proba is not available when model is 'qr'. It is only available for classifier models."):
+        reg_qr.predict_proba(X)
+
 def test_estimator_type_tags():
     reg = Regressor(model="lm")
     clf = Regressor(model="logit")
@@ -64,7 +75,7 @@ def test_logistic_classifier_api(penalty):
     data = np.loadtxt('data_logit.csv', delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1].astype('int')
-    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2)
+    clf = Regressor(model="logit", penalization=penalty, lambda1=0.2, solver="SCS")
     clf.fit(X, y)
 
     proba = clf.predict_proba(X)
