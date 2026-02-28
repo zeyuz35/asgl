@@ -843,6 +843,20 @@ def test_negative_group_index_raises_error():
     with pytest.raises(ValueError, match="group_index must be a positive integer array. Negative values detected"):
         model.fit(X, y, group_index=group_index)
 
+
+def test_invalid_individual_weights_length_raises_error():
+    # Generate dummy data
+    X = np.random.rand(10, 5)
+    y = np.random.rand(10)
+
+    # Create individual_weights with an incorrect length (e.g., 4 instead of 5)
+    invalid_individual_weights = np.array([1.0, 1.0, 1.0, 1.0])
+
+    model = Regressor(model='lm', penalization='alasso', individual_weights=invalid_individual_weights)
+
+    with pytest.raises(ValueError, match="Number of individual weights does not match the number of columns in X"):
+        model.fit(X, y)
+
 # SKLEARN COMPATIBILITY -----------------------------------------------------------------------------------------------
 
 
