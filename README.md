@@ -19,13 +19,6 @@ In addition to sparse matrix support, several other key features have been added
 *   **Solver Fallbacks:** The `solver` parameter now accepts a list of solvers. If the primary solver fails, the model will automatically try subsequent solvers in the list or fall back to other installed CVXPY solvers.
 *   **Canonicalization Backends:** A new `canon_backend` parameter allows users to choose the CVXPY canonicalization backend (e.g., 'CPP', 'SCIPY', 'COO') for better performance or compatibility.
 
-**Note:** For sparse matrices, `variability_pct` must be set to 1.
-Hence, a new `test_skmodels_sparse.py` specifically for sparse matrices has
-the `variability_pct=1`.
-
-However, it should not interfere with original functionality if you pass
-dense matrices.
-
 Install via
 ```
 uv pip install --upgrade git+https://github.com/zeyuz35/asgl.git
@@ -147,7 +140,6 @@ The `Regressor` class includes the following list of parameters:
     components.
     This parameter only has effect in adaptiv penalizations where
     `weight_technique` is equal to ‘pca_pct’, ‘pls_pct’ or ‘sparse_pca’.
-    **Note:** For sparse input matrices, this value must be set to 1.
 - lambda1_weights: float, default=0.1
   - The value of the parameter `lambda1` used to solve the lasso model if
     `weight_technique='lasso'`
