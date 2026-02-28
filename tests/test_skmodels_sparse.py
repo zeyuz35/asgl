@@ -1081,6 +1081,36 @@ def test_alasso_lm():
         model="lm",
         penalization="alasso",
         lambda1=0.1,
+        weight_technique="pca_pct",
+        individual_power_weight=1.2,
+        solver="CLARABEL",
+        variability_pct=0.9,
+    )
+    model.fit(X, y)
+    np.testing.assert_array_almost_equal(
+        model.coef_,
+        np.array(
+            [
+                23.40759085,
+                15.02505376,
+                25.42714541,
+                56.26154095,
+                99.31716436,
+                15.48349891,
+                10.46980939,
+                34.88025905,
+                61.46483173,
+                66.32724564
+            ]
+        ),
+        decimal=3,
+        err_msg='Adaptive lasso lm failure for lambda=0.1, weight_technique="pca_pct" (sparse), variability_pct=0.9 and power_weight=1.2',
+    )
+
+    model = Regressor(
+        model="lm",
+        penalization="alasso",
+        lambda1=0.1,
         weight_technique="unpenalized",
         individual_power_weight=1.2,
         solver="CLARABEL",
@@ -1454,6 +1484,36 @@ def test_aridge_lm():
         model="lm",
         penalization="aridge",
         lambda1=0.1,
+        weight_technique="pca_pct",
+        individual_power_weight=1.2,
+        solver="CLARABEL",
+        variability_pct=0.9,
+    )
+    model.fit(X, y)
+    np.testing.assert_array_almost_equal(
+        model.coef_,
+        np.array(
+            [
+                23.38402864,
+                14.96457767,
+                25.43043672,
+                56.25291803,
+                99.32471105,
+                15.47816076,
+                10.44635765,
+                34.88416976,
+                61.4689987,
+                66.33217868
+            ]
+        ),
+        decimal=3,
+        err_msg='Adaptive ridge lm failure for lambda=0.1, weight_technique="pca_pct" (sparse), variability_pct=0.9 and power_weight=1.2',
+    )
+
+    model = Regressor(
+        model="lm",
+        penalization="aridge",
+        lambda1=0.1,
         weight_technique="unpenalized",
         individual_power_weight=1.2,
         solver="CLARABEL",
@@ -1636,6 +1696,36 @@ def test_agl_lm():
         ),
         decimal=3,
         err_msg='Adaptive group lasso lm failure for lambda=0.1, weight_technique="unpenalized" and power_weight=1.2',
+    )
+
+    model = Regressor(
+        model="lm",
+        penalization="agl",
+        lambda1=0.1,
+        weight_technique="pca_pct",
+        group_power_weight=1.2,
+        solver="CLARABEL",
+        variability_pct=0.9,
+    )
+    model.fit(X, y, group_index)
+    np.testing.assert_array_almost_equal(
+        model.coef_,
+        np.array(
+            [
+                23.40811348,
+                15.03787478,
+                25.42532851,
+                56.26226056,
+                99.31646661,
+                15.48644655,
+                10.46922814,
+                34.87989905,
+                61.46374758,
+                66.32666011
+            ]
+        ),
+        decimal=3,
+        err_msg='Adaptive group lasso lm failure for lambda=0.1, weight_technique="pca_pct" (sparse), variability_pct=0.9 and power_weight=1.2',
     )
 
 
@@ -1836,6 +1926,37 @@ def test_asgl_lm():
         ),
         decimal=3,
         err_msg='Adaptive sparse group lasso lm failure for lambda=0.1, weight_technique="unpenalized" and power_weight=1.2',
+    )
+
+    model = Regressor(
+        model="lm",
+        penalization="asgl",
+        lambda1=0.1,
+        weight_technique="pca_pct",
+        individual_power_weight=1.2,
+        group_power_weight=1.2,
+        solver="CLARABEL",
+        variability_pct=0.9,
+    )
+    model.fit(X, y, group_index)
+    np.testing.assert_array_almost_equal(
+        model.coef_,
+        np.array(
+            [
+                23.40785211,
+                15.03146437,
+                25.42623686,
+                56.26190065,
+                99.31681556,
+                15.48497266,
+                10.46951872,
+                34.8800792,
+                61.46428965,
+                66.32695275
+            ]
+        ),
+        decimal=3,
+        err_msg='Adaptive sparse group lasso lm failure for lambda=0.1, weight_technique="pca_pct" (sparse), variability_pct=0.9 and power_weight=1.2',
     )
 
 

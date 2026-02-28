@@ -507,12 +507,23 @@ class AdaptiveWeights:
         """
         Weights based on principal component analysis
         """
-        var_pct2 = (
-            (np.min(X.shape) - 1) if self.variability_pct == 1 else self.variability_pct
-        )
-        pca = PCA(n_components=var_pct2, svd_solver="auto")
-        t = pca.fit_transform(X)  # scores
-        p = pca.components_.T  # loadings
+        if sparse.issparse(X) and self.variability_pct < 1:
+            n_comp = 1
+            max_comp = np.min(X.shape) - 1
+            while n_comp <= max_comp:
+                pca = PCA(n_components=n_comp, svd_solver="auto")
+                t = pca.fit_transform(X)
+                if np.sum(pca.explained_variance_ratio_) >= self.variability_pct:
+                    break
+                n_comp += 1
+            p = pca.components_.T
+        else:
+            var_pct2 = (
+                (np.min(X.shape) - 1) if self.variability_pct == 1 else self.variability_pct
+            )
+            pca = PCA(n_components=var_pct2, svd_solver="auto")
+            t = pca.fit_transform(X)  # scores
+            p = pca.components_.T  # loadings
         unpenalized_model = BaseModel(
             model=self.model,
             penalization=None,
