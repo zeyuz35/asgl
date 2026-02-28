@@ -508,15 +508,14 @@ class AdaptiveWeights:
         Weights based on principal component analysis
         """
         if sparse.issparse(X) and self.variability_pct < 1:
-            n_comp = 1
             max_comp = np.min(X.shape) - 1
-            while n_comp <= max_comp:
-                pca = PCA(n_components=n_comp, svd_solver="auto")
-                t = pca.fit_transform(X)
-                if np.sum(pca.explained_variance_ratio_) >= self.variability_pct:
-                    break
-                n_comp += 1
-            p = pca.components_.T
+            # Run PCA once with max_comp
+            pca = PCA(n_components=max_comp, svd_solver="arpack")
+            t = pca.fit_transform(X)
+            explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
+            n_comp = np.searchsorted(explained_variance_ratio_cumsum, self.variability_pct) + 1
+            t = t[:, :n_comp]
+            p = pca.components_[:n_comp].T
         else:
             var_pct2 = (
                 (np.min(X.shape) - 1) if self.variability_pct == 1 else self.variability_pct
