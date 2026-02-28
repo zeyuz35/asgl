@@ -25,12 +25,6 @@ GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
 
-warnings.filterwarnings(
-    action="ignore",
-    category=UserWarning,
-    message="You are solving a parameterized problem that is not DPP",
-)
-
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
     """
@@ -168,11 +162,17 @@ class BaseModel(BaseEstimator, RegressorMixin):
             # "default" means pass solver=None so cvxpy picks its own default
             cp_solver = None if solver_name == "default" else solver_name
             try:
-                problem.solve(
-                    solver=cp_solver,
-                    verbose=self.verbose,
-                    canon_backend=self.canon_backend,
-                )
+                with warnings.catch_warnings():
+                    warnings.filterwarnings(
+                        action="ignore",
+                        category=UserWarning,
+                        message="You are solving a parameterized problem that is not DPP",
+                    )
+                    problem.solve(
+                        solver=cp_solver,
+                        verbose=self.verbose,
+                        canon_backend=self.canon_backend,
+                    )
                 if problem.status is not None and "optimal" in problem.status.lower():
                     solved = True
                     break
@@ -205,11 +205,17 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 )
             for alt_solver in remaining:
                 try:
-                    problem.solve(
-                        solver=alt_solver,
-                        verbose=self.verbose,
-                        canon_backend=self.canon_backend,
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            action="ignore",
+                            category=UserWarning,
+                            message="You are solving a parameterized problem that is not DPP",
+                        )
+                        problem.solve(
+                            solver=alt_solver,
+                            verbose=self.verbose,
+                            canon_backend=self.canon_backend,
+                        )
                     if problem.status is not None and "optimal" in problem.status.lower():
                         warnings.warn(
                             f"Successfully solved with fallback solver: {alt_solver}",
