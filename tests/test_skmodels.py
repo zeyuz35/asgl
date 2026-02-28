@@ -835,6 +835,36 @@ def test_negative_group_index_raises_error():
 # SKLEARN COMPATIBILITY -----------------------------------------------------------------------------------------------
 
 
+def test_decision_function():
+    from sklearn.datasets import make_regression, make_classification
+    from scipy import sparse
+
+    # Generate dense data
+    X_reg, y_reg = make_regression(n_samples=50, n_features=10, random_state=42)
+    X_clf, y_clf = make_classification(n_samples=50, n_features=10, random_state=42)
+
+    # Generate sparse data
+    X_reg_sparse = sparse.csr_matrix(X_reg)
+    X_clf_sparse = sparse.csr_matrix(X_clf)
+
+    models = [
+        ('lm', X_reg, y_reg),
+        ('lm', X_reg_sparse, y_reg),
+        ('logit', X_clf, y_clf),
+        ('logit', X_clf_sparse, y_clf)
+    ]
+
+    for model_type, X, y in models:
+        # We set variability_pct=1 to avoid errors with sparse matrices
+        model = Regressor(model=model_type, penalization='lasso', lambda1=0.1, solver='CLARABEL', variability_pct=1)
+        model.fit(X, y)
+
+        # Test decision_function directly
+        decision = model.decision_function(X)
+
+        # The output shape must match (n_samples,)
+        assert decision.shape == (X.shape[0],), f"decision_function failed shape test for model {model_type} with type {type(X)}"
+
 def test_predict():
     data = np.loadtxt('data.csv', delimiter=",", dtype=float)
     X = data[:, :-1]
