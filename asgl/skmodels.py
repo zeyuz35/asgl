@@ -125,10 +125,6 @@ class BaseModel(BaseEstimator, RegressorMixin):
         q = float(self.quantile)
         return cp.sum(0.5 * cp.abs(X) + (q - 0.5) * X)
 
-    def _define_quantile_objective(self, n, q, u, v):
-        # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
-        return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
-
     def _define_objective_function(
         self, y: ArrayOrSparse, model_prediction: cp.Expression
     ) -> cp.Expression:
@@ -300,27 +296,24 @@ class BaseModel(BaseEstimator, RegressorMixin):
         X_constant = cp.Constant(X)
         pred = X_constant @ beta_var + intercept_var
         if self.model == "qr":
-            # residual splitting variables (nonnegative)
-            # For multi-output: u,v shape (n, my), for single output: (n,)
+            # ⚡ Bolt Optimization: Replace residual splitting (u, v nonnegative variables) with absolute
+            # value formulation. This reduces the number of atoms/variables and constraints in the CVXPY
+            # expression graph significantly, speeding up canonicalization and problem solving.
+            q = float(self.quantile)
             if my == 1:
-                u = cp.Variable(n, nonneg=True)
-                v = cp.Variable(n, nonneg=True)
-                # Reshape pred to (n,) for single output constraint
                 pred_reshaped = cp.reshape(pred, (n,), order="F")
-                constraints = [y.ravel() - pred_reshaped == u - v]
+                residuals = y.ravel() - pred_reshaped
             else:
-                u = cp.Variable((n, my), nonneg=True)
-                v = cp.Variable((n, my), nonneg=True)
-                constraints = [y - pred == u - v]
+                residuals = y - pred
 
-            objective = self._define_quantile_objective(n, self.quantile, u, v)
+            objective = (1.0 / n) * cp.sum(0.5 * cp.abs(residuals) + (q - 0.5) * residuals)
 
             # add penalties if any (pen should operate on beta_var)
             if self.penalization is not None:
                 pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
                 objective = objective + pen
 
-            problem = cp.Problem(cp.Minimize(objective), constraints)
+            problem = cp.Problem(cp.Minimize(objective))
 
         else:
             # existing lm / logit handling (keeping X_const @ beta_var)
