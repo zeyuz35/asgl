@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Optional, Tuple, Union, Dict
+from typing import Sequence, Optional, Tuple
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
 import cvxpy as cp
 import numpy as np
@@ -25,19 +25,11 @@ GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
 
-
-def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
-    """
-    Efficiently computes group sizes and indices for each group.
-    """
-    argsort_indices = np.argsort(group_index, kind='mergesort')
-    sorted_group_index = group_index[argsort_indices]
-    unique_groups, group_starts, group_counts = np.unique(sorted_group_index, return_index=True, return_counts=True)
-    indices_per_group = {
-        g: argsort_indices[start : start + count]
-        for g, start, count in zip(unique_groups, group_starts, group_counts)
-    }
-    return unique_groups, group_counts, indices_per_group
+warnings.filterwarnings(
+    action="ignore",
+    category=UserWarning,
+    message="You are solving a parameterized problem that is not DPP",
+)
 
 
 class BaseModel(BaseEstimator, RegressorMixin):
@@ -53,7 +45,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         fit_intercept: bool = True,
         lambda1: float = 0.1,
         alpha: float = 0.5,
-        solver: Union[str, Sequence[str]] = "CLARABEL",
+        solver: str = "CLARABEL",
         tol: float = 1e-3,
         verbose: bool = False,
         canon_backend: str = "CPP",
@@ -120,13 +112,21 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _quantile_function(self, X) -> cp.Expression:
         """cp quantile loss function."""
+        # return 0.5 * cp.abs(X) + (self.quantile - 0.5) * X
         # new implementation, should be more efficient avoiding abs
-        # Uses a residual splitting approach
         q = float(self.quantile)
-        return cp.sum(0.5 * cp.abs(X) + (q - 0.5) * X)
+        return q * cp.sum(cp.pos(X)) + (1.0 - q) * cp.sum(cp.pos(-X))
+
+    # def _define_quantile_objective(n, q, u, v):
+    #     # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
+    #     return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
+
+    def _define_quantile_objective(self, n, q, u, v):
+        # objective: (1/n) * (q * sum(u) + (1-q) * sum(v))
+        return (1.0 / n) * (q * cp.sum(u) + (1.0 - q) * cp.sum(v))
 
     def _define_objective_function(
-        self, y: ArrayOrSparse, model_prediction: cp.Expression
+        self, y: np.ndarray, model_prediction: cp.Expression
     ) -> cp.Expression:
         # Define the objective function based on the problem to solve
         if self.model == "lm":
@@ -143,88 +143,41 @@ class BaseModel(BaseEstimator, RegressorMixin):
             raise ValueError("Invalid value for model parameter.")
 
     def _solve_cp_problem(self, problem: cp.Problem) -> None:
-        # Normalise solver to a list of strings; "default" means let cp choose
-        if isinstance(self.solver, str):
-            requested_solvers = [self.solver]
-        else:
-            requested_solvers = list(self.solver)
-
-        installed_solvers = sorted(cp.installed_solvers())
-        failed_solvers: set = set()
-        solved = False
-
-        # --- Phase 1: try each solver in the user-specified sequence ---
-        for solver_name in requested_solvers:
-            # "default" means pass solver=None so cvxpy picks its own default
-            cp_solver = None if solver_name == "default" else solver_name
-            try:
-                with warnings.catch_warnings():
-                    warnings.filterwarnings(
-                        action="ignore",
-                        category=UserWarning,
-                        message="You are solving a parameterized problem that is not DPP",
-                    )
+        # Solve a cvxpy problem
+        solver_options = list(cp.installed_solvers())
+        chosen_solver = (
+            self.solver if self.solver != "default" else None
+        )  # Let cp choose default
+        try:
+            problem.solve(
+                solver=chosen_solver,
+                verbose=self.verbose,
+                canon_backend=self.canon_backend,
+            )
+        except (ValueError, cp.error.SolverError, cp.error.DCPError):
+            warnings.warn(
+                f"Default solver {self.solver} failed. Using alternative options from {solver_options}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            if chosen_solver in solver_options:
+                solver_options.remove(chosen_solver)  # Skip the one that already failed
+            for alt_solver in solver_options:
+                try:
                     problem.solve(
-                        solver=cp_solver,
+                        solver=alt_solver,
                         verbose=self.verbose,
                         canon_backend=self.canon_backend,
                     )
-                if problem.status is not None and "optimal" in problem.status.lower():
-                    solved = True
-                    break
-                else:
-                    # Solved without exception but status is not optimal
-                    warnings.warn(
-                        f"Solver {solver_name} returned status '{problem.status}'. Trying next solver.",
-                        RuntimeWarning,
-                        stacklevel=2,
-                    )
-                    failed_solvers.add(solver_name)
-            except (ValueError, cp.error.SolverError, cp.error.DCPError):
-                warnings.warn(
-                    f"Solver {solver_name} failed. Trying next solver.",
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
-                failed_solvers.add(solver_name)
-
-        # --- Phase 2: fall back to remaining installed solvers not yet tried ---
-        if not solved:
-            remaining = [s for s in installed_solvers if s not in failed_solvers
-                         and s not in requested_solvers]
-            if remaining:
-                warnings.warn(
-                    f"Requested solver(s) {requested_solvers} failed. "
-                    f"Trying remaining installed solvers: {remaining}",
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
-            for alt_solver in remaining:
-                try:
-                    with warnings.catch_warnings():
-                        warnings.filterwarnings(
-                            action="ignore",
-                            category=UserWarning,
-                            message="You are solving a parameterized problem that is not DPP",
-                        )
-                        problem.solve(
-                            solver=alt_solver,
-                            verbose=self.verbose,
-                            canon_backend=self.canon_backend,
-                        )
-                    if problem.status is not None and "optimal" in problem.status.lower():
+                    if "optimal" in problem.status.lower():
                         warnings.warn(
-                            f"Successfully solved with fallback solver: {alt_solver}",
+                            f"Successfully solved with alternative solver: {alt_solver}",
                             RuntimeWarning,
                             stacklevel=2,
                         )
-                        solved = True
                         break
-                    else:
-                        failed_solvers.add(alt_solver)
                 except (ValueError, cp.error.SolverError, cp.error.DCPError):
-                    failed_solvers.add(alt_solver)
-
+                    pass
         if (
             problem.status is None
             or "infeasible" in problem.status.lower()
@@ -259,7 +212,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _gl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
+        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -270,7 +224,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
+        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -281,39 +236,38 @@ class BaseModel(BaseEstimator, RegressorMixin):
         return pen
 
     def _obtain_beta(
-        self, X: ArrayOrSparse, y: ArrayOrSparse, group_index: Optional[Sequence[int]]
+        self, X: ArrayOrSparse, y: np.ndarray, group_index: Optional[Sequence[int]]
     ) -> Tuple[np.ndarray, np.ndarray]:
         n = X.shape[0]
-        mx = X.shape[1]
-        # Ensure y is 2D for CVXPY operations
-        y_was_1d = y.ndim == 1
-        if y_was_1d:
-            y = y.reshape(-1, 1)
-        my = y.shape[1]
-        beta_var = cp.Variable((mx, my))
+        m = X.shape[1]
+        beta_var = cp.Variable(m)
         intercept_var = cp.Variable() if self.fit_intercept else 0
         # wrap the X in a constant to avoid issues with sparse matrices in cvxpy expressions
         X_constant = cp.Constant(X)
         pred = X_constant @ beta_var + intercept_var
+        # objective_function = self._define_objective_function(y, pred)
+        # # Handle unpenalized models
+        # if self.penalization is None:
+        #     problem = cp.Problem(cp.Minimize(objective_function))
+        # else:
+        #     pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
+        #     problem = cp.Problem(cp.Minimize(objective_function + pen))
         if self.model == "qr":
-            # ⚡ Bolt Optimization: Replace residual splitting (u, v nonnegative variables) with absolute
-            # value formulation. This reduces the number of atoms/variables and constraints in the CVXPY
-            # expression graph significantly, speeding up canonicalization and problem solving.
-            q = float(self.quantile)
-            if my == 1:
-                pred_reshaped = cp.reshape(pred, (n,), order="F")
-                residuals = y.ravel() - pred_reshaped
-            else:
-                residuals = y - pred
+            # residual splitting variables (nonnegative)
+            u = cp.Variable(n, nonneg=True)
+            v = cp.Variable(n, nonneg=True)
 
-            objective = (1.0 / n) * cp.sum(0.5 * cp.abs(residuals) + (q - 0.5) * residuals)
+            # equality constraints: y - pred == u - v
+            constraints = [y - pred == u - v]
+
+            objective = self._define_quantile_objective(n, self.quantile, u, v)
 
             # add penalties if any (pen should operate on beta_var)
             if self.penalization is not None:
                 pen = getattr(self, "_" + self.penalization)(beta_var, group_index)
                 objective = objective + pen
 
-            problem = cp.Problem(cp.Minimize(objective))
+            problem = cp.Problem(cp.Minimize(objective), constraints)
 
         else:
             # existing lm / logit handling (keeping X_const @ beta_var)
@@ -329,42 +283,27 @@ class BaseModel(BaseEstimator, RegressorMixin):
         if (beta_sol is None) or (intercept_sol is None):
             raise ValueError("CVXPY optimization failed to find a solution")
         beta_sol[np.abs(beta_sol) < self.tol] = 0
-        # Flatten beta if y was originally 1D
-        if y_was_1d:
-            beta_sol = beta_sol.ravel()
+        beta_sol = np.ravel(beta_sol)  # Ensure it is 1D
         return intercept_sol, beta_sol
 
     def fit(
         self,
         X: ArrayOrSparse,
-        y: ArrayOrSparse,
+        y: np.ndarray,
         group_index: Optional[Sequence[int]] = None,
     ):
         self.feature_names_in_ = None
         if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
             self.feature_names_in_ = np.asarray(X.columns, dtype=object)
-        X, y = check_X_y(
-            X,
-            y,
-            accept_sparse=True,
-            y_numeric=True,
-            ensure_min_samples=2,
-            multi_output=True,
-        )
+        X, y = check_X_y(X, y, accept_sparse=True, y_numeric=True, ensure_min_samples=2)
         self.n_features_in_ = X.shape[1]
         self._check_attributes()
         # Check binary y
         if self._estimator_type == "classifier":
             if type_of_target(y) != "binary":
-                unique_y_values = np.unique(y)
-                # check_estimator might pass float y like [0.0, 1.0]
-                is_binary_int = len(unique_y_values) <= 2 and np.all(
-                    np.isin(unique_y_values, [0, 1])
-                )
-                is_binary_float = len(unique_y_values) <= 2 and np.all(
-                    np.isin(unique_y_values, [0.0, 1.0])
-                )
-                if (not is_binary_int) | (not is_binary_float):
+                # ⚡ Bolt Optimization: Use O(N) vectorized check instead of O(N log N) np.unique()
+                # `y == 0` correctly handles both integer 0 and float 0.0.
+                if not np.all((y == 0) | (y == 1)):
                     raise ValueError(
                         f"For logistic model, y must contain only 0 and 1 (or 0.0, 1.0)."
                     )
@@ -395,6 +334,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
         intercept = self.intercept_ if self.fit_intercept else 0
+        # predictions = np.dot(X, self.coef_) + intercept
         predictions = (
             X @ self.coef_ + intercept
             if sparse.issparse(X)
@@ -465,7 +405,7 @@ class AdaptiveWeights:
         spca_ridge_alpha: float = 1e-2,
         individual_weights=None,
         group_weights=None,
-        solver: Union[str, Sequence[str]] = "CLARABEL",
+        solver: str = "CLARABEL",
         weight_tol: float = 1e-4,
         verbose: bool = False,
         canon_backend: str = "CPP",
@@ -487,7 +427,7 @@ class AdaptiveWeights:
         self.verbose = verbose
         self.canon_backend = canon_backend
 
-    def _wpca_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wpca_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Weights based on the first principal component
         """
@@ -496,26 +436,16 @@ class AdaptiveWeights:
         tmp_weight = np.abs(pca.components_).ravel()
         return tmp_weight
 
-    def _wpca_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wpca_pct(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Weights based on principal component analysis
         """
-        if sparse.issparse(X) and self.variability_pct < 1:
-            max_comp = np.min(X.shape) - 1
-            # Run PCA once with max_comp
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
-            t = pca.fit_transform(X)
-            explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
-            n_comp = np.searchsorted(explained_variance_ratio_cumsum, self.variability_pct) + 1
-            t = t[:, :n_comp]
-            p = pca.components_[:n_comp].T
-        else:
-            var_pct2 = (
-                (np.min(X.shape) - 1) if self.variability_pct == 1 else self.variability_pct
-            )
-            pca = PCA(n_components=var_pct2, svd_solver="auto")
-            t = pca.fit_transform(X)  # scores
-            p = pca.components_.T  # loadings
+        var_pct2 = (
+            (np.min(X.shape) - 1) if self.variability_pct == 1 else self.variability_pct
+        )
+        pca = PCA(n_components=var_pct2, svd_solver="auto")
+        t = pca.fit_transform(X)  # scores
+        p = pca.components_.T  # loadings
         unpenalized_model = BaseModel(
             model=self.model,
             penalization=None,
@@ -528,15 +458,10 @@ class AdaptiveWeights:
         unpenalized_model.fit(X=t, y=y)
         beta_sol = unpenalized_model.coef_
         # Recover an estimation of the beta parameters and use it as weight
-        tmp_weight = np.abs(np.dot(p, beta_sol))
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
-        else:
-            tmp_weight = tmp_weight.ravel()
+        tmp_weight = np.abs(np.dot(p, beta_sol)).ravel()
         return tmp_weight
 
-    def _wpls_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wpls_1(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Weights based on the first partial least squares component
         """
@@ -545,7 +470,7 @@ class AdaptiveWeights:
         tmp_weight = np.abs(pls.x_rotations_).ravel()
         return tmp_weight
 
-    def _wpls_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wpls_pct(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Weights based on partial least squares
         """
@@ -563,20 +488,12 @@ class AdaptiveWeights:
                 stacklevel=2,
             )
         n_comp = np.searchsorted(fractions_of_explained_variance, self.variability_pct)
-        # Ensure n_comp is at least 1
-        n_comp = max(1, n_comp)
         pls = PLSRegression(n_components=n_comp, scale=False)
         pls.fit(X, y)
-        # pls.coef_ has shape (n_outputs, n_features), transpose to (n_features, n_outputs)
-        tmp_weight = np.abs(np.asarray(pls.coef_).T)
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
-        else:
-            tmp_weight = tmp_weight.ravel()
+        tmp_weight = np.abs(np.asarray(pls.coef_).ravel())
         return tmp_weight
 
-    def _wsparse_pca(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wsparse_pca(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Weights based on sparse principal component analysis.
         """
@@ -614,15 +531,10 @@ class AdaptiveWeights:
         unpenalized_model.fit(X=t[:, 0:n_comp], y=y)
         beta_sol = unpenalized_model.coef_
         # Recover an estimation of the beta parameters and use it as weight
-        tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol))
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
-        else:
-            tmp_weight = tmp_weight.ravel()
+        tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol)).ravel()
         return tmp_weight
 
-    def _wunpenalized(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wunpenalized(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         """
         Only for low dimensional frameworks. Weights based on an unpenalized regression model
         """
@@ -637,12 +549,9 @@ class AdaptiveWeights:
         )
         unpenalized_model.fit(X=X, y=y)
         tmp_weight = np.abs(unpenalized_model.coef_)
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
-    def _wlasso(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wlasso(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         lasso_model = BaseModel(
             model=self.model,
             penalization="lasso",
@@ -655,12 +564,9 @@ class AdaptiveWeights:
         )
         lasso_model.fit(X=X, y=y)
         tmp_weight = np.abs(lasso_model.coef_)
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
-    def _wridge(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
+    def _wridge(self, X: ArrayOrSparse, y: np.ndarray) -> np.ndarray:
         ridge_model = BaseModel(
             model=self.model,
             penalization="ridge",
@@ -673,9 +579,6 @@ class AdaptiveWeights:
         )
         ridge_model.fit(X=X, y=y)
         tmp_weight = np.abs(ridge_model.coef_)
-        # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
-        if tmp_weight.ndim > 1:
-            tmp_weight = np.linalg.norm(tmp_weight, axis=1)
         return tmp_weight
 
     def _check_type_penalization(self) -> Tuple[bool, bool]:
@@ -687,55 +590,39 @@ class AdaptiveWeights:
     def fit_weights(
         self,
         X: ArrayOrSparse,
-        y: ArrayOrSparse,
+        y: np.ndarray,
         group_index: Optional[Sequence[int]] = None,
     ):
-        X, y = check_X_y(
-            X,
-            y,
-            accept_sparse=True,
-            y_numeric=True,
-            ensure_min_samples=2,
-            multi_output=True,
-        )
+        X, y = check_X_y(X, y, accept_sparse=True, y_numeric=True, ensure_min_samples=2)
         bool_individual, bool_group = self._check_type_penalization()
         if bool_group and group_index is None:
             raise ValueError(
                 "A group penalisation was requested but `group_index` is missing."
             )
         tmp_weight: Optional[np.ndarray] = None
-        if bool_individual:
-            if self.individual_weights is None:
+        if bool_individual and self.individual_weights is None:
+            tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
+            self.individual_weights = 1 / (
+                tmp_weight**self.individual_power_weight + self.weight_tol
+            )
+        if bool_group and self.group_weights is None:
+            if tmp_weight is None:
                 tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
-                self.individual_weights_ = 1 / (
-                    tmp_weight**self.individual_power_weight + self.weight_tol
+            group_index = np.asarray(group_index, dtype=int)
+            unique_index = np.unique(group_index)
+            group_weights = []
+            for g in unique_index:
+                mask = group_index == g
+                norm = np.linalg.norm(tmp_weight[mask], ord=2)
+                group_weights.append(
+                    1.0 / (np.power(norm, self.group_power_weight) + self.weight_tol)
                 )
-            else:
-                self.individual_weights_ = self.individual_weights
-
-        if bool_group:
-            if self.group_weights is None:
-                if tmp_weight is None:
-                    tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
-                group_index = np.asarray(group_index, dtype=int)
-                unique_groups, group_counts, indices_per_group = _get_group_info(group_index)
-                group_weights = []
-                for g in unique_groups:
-                    mask = indices_per_group[g]
-                    norm = np.linalg.norm(tmp_weight[mask], ord=2)
-                    group_weights.append(
-                        1.0
-                        / (np.power(norm, self.group_power_weight) + self.weight_tol)
-                    )
-                self.group_weights_ = np.asarray(group_weights)
-            else:
-                self.group_weights_ = self.group_weights
-
-        if bool_individual and (len(self.individual_weights_) != X.shape[1]):
+            self.group_weights = np.asarray(group_weights)
+        if bool_individual and (len(self.individual_weights) != X.shape[1]):
             raise ValueError(
                 "Number of individual weights does not match the number of columns in X"
             )
-        if bool_group and (len(self.group_weights_) != len(np.unique(group_index))):
+        if bool_group and (len(self.group_weights) != len(np.unique(group_index))):
             raise ValueError(
                 "Number of group weights does not match the number of groups in group_index"
             )
@@ -751,8 +638,6 @@ class Regressor(BaseModel, AdaptiveWeights):
             - 'lm': linear regression models.
             - 'qr': quantile regression models.
             - 'logit': logistic regression for binary classification, output binary classification.
-        Both 'lm' and 'qr' models support multivariate regression (multiple outputs),
-        allowing for simultaneous fitting and coupled feature selection with grouped penalizations.
     penalization: str or None, default = 'lasso'
         Penalization to use. Currently, accepts:
             - None: unpenalized model.
@@ -777,10 +662,6 @@ class Regressor(BaseModel, AdaptiveWeights):
         ``alpha=1`` enforces a lasso while ``alpha=0`` enforces a group lasso.
     solver: str, default='CLARABEL'
         Solver to be used by cvxpy. Default uses open source convex programming solver CLARABEL.
-        If a list is provided, the model will try each solver in order.
-        If the specified solver(s) fail, the model falls back to other installed solvers.
-        See `CVXPY Solvers <https://www.cvxpy.org/tutorial/advanced/index.html#solve-method-options>`_
-        for more information.
         Users can check available solvers via the command `cp.installed_solvers()`.
     weight_technique: str, default='pca_pct'
         Weight technique used to fit the adaptive weights. Currently, accepts:
@@ -801,7 +682,6 @@ class Regressor(BaseModel, AdaptiveWeights):
     variability_pct: float, default=0.9
         Percentage of variability explained by pca, pls and sparse_pca components. It only has effect if
         `` weight_technique`` is one of the following: 'pca_pct', 'pls_pct', 'sparse_pca'.
-        **Note:** For sparse input matrices, this value must be set to 1.
     lambda1_weights: float, default=0.1
         The value of the parameter ``lambda1`` used to solve the lasso model if ``weight_technique='lasso'`` or
         the ridge if ``weight_technique='ridge'``
@@ -822,11 +702,6 @@ class Regressor(BaseModel, AdaptiveWeights):
         be 0.
     weight_tol: float, default=1e-4
         Tolerance value used to avoid ZeroDivision errors when computing the weights.
-    canon_backend: str, default='CPP'
-        Canonicalization backend to be used by ``cvxpy``.
-        Options include 'CPP' (default), 'SCIPY', and 'COO'.
-        See `CVXPY Canonicalization Backends <https://www.cvxpy.org/tutorial/advanced/index.html#canonicalization-backends>`_
-        for more information.
 
     Attributes
     ----------
@@ -846,7 +721,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         fit_intercept: bool = True,
         lambda1: float = 0.1,
         alpha: float = 0.5,
-        solver: Union[str, Sequence[str]] = "default",
+        solver: str = "default",
         weight_technique: str = "pca_pct",
         individual_power_weight: float = 1,
         group_power_weight: float = 1,
@@ -889,10 +764,9 @@ class Regressor(BaseModel, AdaptiveWeights):
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        mx, my = beta_var.shape
-        # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
+        individual_weights_param = cp.Parameter(
+            len(self.individual_weights), nonneg=True, value=self.individual_weights
+        )
         pen = lambda_param * cp.sum_squares(
             cp.multiply(individual_weights_param, beta_var)
         )
@@ -902,44 +776,40 @@ class Regressor(BaseModel, AdaptiveWeights):
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        mx, my = beta_var.shape
-        # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
+        individual_weights_param = cp.Parameter(
+            len(self.individual_weights), nonneg=True, value=self.individual_weights
+        )
         pen = lambda_param * cp.norm1(cp.multiply(individual_weights_param, beta_var))
         return pen
 
     def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
+        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
+            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
         )
-        mx, my = beta_var.shape
-        # For each group, compute the norm of all features in that group across all outputs
-        # This gives the 2-norm of the group's coefficients (treating each output separately)
         group_norms = cp.hstack(
-            [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
+            [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
         )
         pen = lambda_param * cp.sum(cp.multiply(group_weights, group_norms))
         return pen
 
     def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
-        mx, my = beta_var.shape
-        # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
+        individual_weights_param = cp.Parameter(
+            len(self.individual_weights), nonneg=True, value=self.individual_weights
+        )
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes = np.unique(group_index, return_counts=True)
+        indices_per_group = {g: np.where(group_index == g)[0] for g in unique_groups}
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
+            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights
         )
-        # For each group, compute the norm of all features in that group across all outputs
         group_norms = cp.hstack(
-            [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
+            [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
         )
         individual_penalization = individual_param * cp.norm1(
             cp.multiply(individual_weights_param, beta_var)
@@ -953,7 +823,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     def fit(
         self,
         X: ArrayOrSparse,
-        y: ArrayOrSparse,
+        y: np.ndarray,
         group_index: Optional[Sequence[int]] = None,
     ):
         self._check_attributes()

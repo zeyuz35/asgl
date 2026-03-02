@@ -5,3 +5,7 @@
 ## 2026-03-01 - Quantile Regression Problem Formulation
 **Learning:** Formulating the quantile regression objective in CVXPY using `cp.sum(0.5 * cp.abs(residuals) + (q - 0.5) * residuals)` compiles and solves more efficiently than the textbook "residual splitting" approach with two non-negative variables ($u$, $v$) and an equality constraint ($residuals = u - v$). Residual splitting creates $2N$ additional variables and $N$ extra constraints in the expression graph. Although both are mathematically equivalent and map to linear/convex programs, the `cp.abs` formulation reduces the overhead of canonicalization and allows the solver's backend to process it faster due to a simpler expression tree.
 **Action:** When implementing L1-like or pinball losses in CVXPY, prefer using `cp.abs()` over manually splitting variables into positive and negative parts with explicit constraints.
+
+## 2026-03-01 - O(N) Label Validation
+**Learning:** `np.unique()` contains an implicit `np.argsort()` under the hood, making it $O(N \log N)$. When used inside `BaseModel.fit()` merely to check if an array contains exclusively `0` and `1` (or `0.0` and `1.0`), this creates an unnecessary bottleneck on large label arrays. A direct vectorized check like `np.all((y == 0) | (y == 1))` is mathematically equivalent but strictly $O(N)$ and substantially faster.
+**Action:** When verifying binary array contents, avoid `np.unique` combined with `np.isin`. Prefer single-pass $O(N)$ boolean checks.
