@@ -24,6 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
+ALLOWED_WEIGHT_TECHNIQUES = ["pca_1", "pca_pct", "pls_1", "pls_pct", "sparse_pca", "unpenalized", "lasso", "ridge"]
 
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
@@ -844,6 +845,14 @@ class Regressor(BaseModel, AdaptiveWeights):
     n_features_in_: int
         Number of features seen during fit.
     """
+
+    def _check_attributes(self) -> None:
+        super()._check_attributes()
+        check_scalar(self.weight_technique, "weight_technique", target_type=str)
+        if self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES:
+            raise ValueError(
+                f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; got {self.weight_technique}."
+            )
 
     def __init__(
         self,
