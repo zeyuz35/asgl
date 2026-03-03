@@ -26,7 +26,7 @@ ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONA
 ALLOWED_MODELS = ["lm", "qr", "logit"]
 
 
-def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
+def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray], np.ndarray, np.ndarray]:
     """
     Efficiently computes group sizes and indices for each group.
     """
@@ -37,7 +37,7 @@ def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Di
         g: argsort_indices[start : start + count]
         for g, start, count in zip(unique_groups, group_starts, group_counts)
     }
-    return unique_groups, group_counts, indices_per_group
+    return unique_groups, group_counts, indices_per_group, group_starts, argsort_indices
 
 
 class BaseModel(BaseEstimator, RegressorMixin):
@@ -263,7 +263,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
     def _gl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes, indices_per_group, _, _ = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -274,7 +274,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
         individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes, indices_per_group, _, _ = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
@@ -725,15 +725,15 @@ class AdaptiveWeights:
                 if tmp_weight is None:
                     tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
                 group_index = np.asarray(group_index, dtype=int)
-                unique_groups, group_counts, indices_per_group = _get_group_info(group_index)
-                group_weights = []
-                for g in unique_groups:
-                    mask = indices_per_group[g]
-                    norm = np.linalg.norm(tmp_weight[mask], ord=2)
-                    group_weights.append(
-                        1.0
-                        / (np.power(norm, self.group_power_weight) + self.weight_tol)
-                    )
+                unique_groups, group_counts, indices_per_group, group_starts, argsort_indices = _get_group_info(group_index)
+
+                # Vectorized group weight calculation
+                tmp_weight_sq = tmp_weight ** 2
+                sorted_tmp_weight_sq = tmp_weight_sq[argsort_indices]
+                sum_sq = np.add.reduceat(sorted_tmp_weight_sq, group_starts)
+                norms = np.sqrt(sum_sq)
+                group_weights = 1.0 / (np.power(norms, self.group_power_weight) + self.weight_tol)
+
                 self.group_weights_ = np.asarray(group_weights)
             else:
                 self.group_weights_ = self.group_weights
@@ -918,7 +918,7 @@ class Regressor(BaseModel, AdaptiveWeights):
 
     def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes, indices_per_group, _, _ = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
@@ -939,7 +939,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         weights = np.asarray(self.individual_weights_).reshape(-1, 1)
         individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
         group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
-        unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
+        unique_groups, group_sizes, indices_per_group, _, _ = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_weights = cp.Parameter(
             len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
