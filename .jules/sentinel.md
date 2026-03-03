@@ -1,0 +1,4 @@
+## 2024-05-24 - Fix insecure reflection in getattr dynamic dispatch
+**Vulnerability:** The `weight_technique` parameter in the `Regressor` and `AdaptiveWeights` classes allowed for insecure reflection when dynamically looking up the weighting function using `getattr(self, "_w" + self.weight_technique)`. An attacker could pass arbitrary method names string fragments to be resolved and executed.
+**Learning:** Any user input that is concatenated to construct method or attribute names and passed to reflection utilities like `getattr` or `eval` must be strictly validated against an explicit allowlist.
+**Prevention:** Implement an allowlist for `weight_technique` (e.g., `ALLOWED_WEIGHT_TECHNIQUES`) and validate the user-provided string against this allowlist within the constructor validation method `_check_attributes()`.
