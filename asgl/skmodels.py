@@ -24,6 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
+ALLOWED_WEIGHT_TECHNIQUES = ["pca_1", "pca_pct", "pls_1", "pls_pct", "lasso", "ridge", "unpenalized", "sparse_pca"]
 
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
@@ -890,6 +891,15 @@ class Regressor(BaseModel, AdaptiveWeights):
         self.individual_weights = individual_weights
         self.group_weights = group_weights
         self.weight_tol = weight_tol
+
+    def _check_attributes(self) -> None:
+        super()._check_attributes()
+        if not isinstance(self.weight_technique, str):
+            raise TypeError(f"weight_technique must be a string; got {type(self.weight_technique).__name__}.")
+        if self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES:
+            raise ValueError(
+                f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; got {self.weight_technique}."
+            )
 
     # Penalized problems
     def _aridge(
