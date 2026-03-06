@@ -891,6 +891,20 @@ class Regressor(BaseModel, AdaptiveWeights):
         self.group_weights = group_weights
         self.weight_tol = weight_tol
 
+    def _check_attributes(self) -> None:
+        """
+        Validate constructor arguments.
+        Raises ValueError if any argument is outside the allowed domain.
+        """
+        super()._check_attributes()
+
+        # Validating weight_technique against insecure reflection
+        allowed_weight_techniques = ["pca_1", "pca_pct", "pls_1", "pls_pct", "sparse_pca", "unpenalized", "lasso", "ridge"]
+        if not isinstance(self.weight_technique, str):
+            raise ValueError(f"weight_technique must be a string; got {type(self.weight_technique).__name__}.")
+        if self.weight_technique not in allowed_weight_techniques:
+            raise ValueError(f"weight_technique must be one of {sorted(allowed_weight_techniques)}; got {self.weight_technique}.")
+
     # Penalized problems
     def _aridge(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
