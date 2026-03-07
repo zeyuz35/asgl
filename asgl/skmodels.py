@@ -250,30 +250,27 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _ridge(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        pen = lambda_param * cp.sum_squares(beta_var)
+        pen = self.lambda1 * cp.sum_squares(beta_var)
         return pen
 
     def _lasso(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
-        pen = lambda_param * cp.norm1(beta_var)
+        pen = self.lambda1 * cp.norm1(beta_var)
         return pen
 
     def _gl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
         )
-        pen = lambda_param * cp.sum(cp.multiply(sqrt_sizes, group_norms))
+        pen = self.lambda1 * cp.sum(cp.multiply(sqrt_sizes, group_norms))
         return pen
 
     def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
-        group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
-        individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
+        group_param = self.lambda1 * (1 - self.alpha)
+        individual_param = self.lambda1 * self.alpha
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
         group_norms = cp.hstack(
@@ -895,61 +892,51 @@ class Regressor(BaseModel, AdaptiveWeights):
     def _aridge(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
         weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
-        pen = lambda_param * cp.sum_squares(
-            cp.multiply(individual_weights_param, beta_var)
+        pen = self.lambda1 * cp.sum_squares(
+            cp.multiply(weights, beta_var)
         )
         return pen
 
     def _alasso(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
         weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
-        pen = lambda_param * cp.norm1(cp.multiply(individual_weights_param, beta_var))
+        pen = self.lambda1 * cp.norm1(cp.multiply(weights, beta_var))
         return pen
 
     def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
-        lambda_param = cp.Parameter(nonneg=True, value=self.lambda1)
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
-        group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
-        )
+        group_weights = sqrt_sizes * self.group_weights_
         mx, my = beta_var.shape
         # For each group, compute the norm of all features in that group across all outputs
         # This gives the 2-norm of the group's coefficients (treating each output separately)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
-        pen = lambda_param * cp.sum(cp.multiply(group_weights, group_norms))
+        pen = self.lambda1 * cp.sum(cp.multiply(group_weights, group_norms))
         return pen
 
     def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
-        individual_param = cp.Parameter(nonneg=True, value=self.lambda1 * self.alpha)
+        individual_param = self.lambda1 * self.alpha
         mx, my = beta_var.shape
         # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
         weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        individual_weights_param = cp.Parameter((mx, 1), nonneg=True, value=weights)
-        group_param = cp.Parameter(nonneg=True, value=self.lambda1 * (1 - self.alpha))
+        group_param = self.lambda1 * (1 - self.alpha)
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
         sqrt_sizes = np.sqrt(group_sizes)
-        group_weights = cp.Parameter(
-            len(sqrt_sizes), nonneg=True, value=sqrt_sizes * self.group_weights_
-        )
+        group_weights = sqrt_sizes * self.group_weights_
         # For each group, compute the norm of all features in that group across all outputs
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
         individual_penalization = individual_param * cp.norm1(
-            cp.multiply(individual_weights_param, beta_var)
+            cp.multiply(weights, beta_var)
         )
         group_penalization = group_param * cp.sum(
             cp.multiply(group_weights, group_norms)
