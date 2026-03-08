@@ -1,0 +1,4 @@
+## 2025-03-08 - [Insecure Reflection via Unvalidated weight_technique]
+**Vulnerability:** The `weight_technique` parameter in `AdaptiveWeights.fit_weights` was directly concatenated into a string to dynamically access methods via `getattr(self, "_w" + self.weight_technique)`. An unvalidated input could lead to insecure reflection, executing unintended methods.
+**Learning:** Even internal API configuration parameters that look like simple string selectors must be validated against a strict allowlist before being used in reflection/metaprogramming operations like `getattr` or `eval`. Scikit-learn validation conventions (checking if string values belong to a predefined list) provide necessary bounds checking.
+**Prevention:** Always maintain a static array of allowed configuration string literals (e.g., `ALLOWED_WEIGHT_TECHNIQUES`) and enforce membership checks on inputs that dictate dynamic dispatch.
