@@ -1,0 +1,4 @@
+## 2024-05-24 - [Insecure Reflection in Dynamic Method Dispatch]
+**Vulnerability:** The `weight_technique` string parameter in the `AdaptiveWeights` class was passed directly to `getattr` to dispatch method calls (e.g., `getattr(self, "_w" + self.weight_technique)`). Without input validation, this allows for the execution of arbitrary methods within the class if an attacker can control the input string.
+**Learning:** Python's dynamic method dispatch via `getattr` is powerful but dangerous if used with unvalidated user input. Any string concatenated to construct a method or attribute name must be strictly validated against an explicit allowlist before use.
+**Prevention:** Implement strict allowlist validation (e.g., checking against a predefined list like `ALLOWED_WEIGHT_TECHNIQUES`) for all parameters that dictate dynamic execution paths. Avoid relying solely on documentation to guide user input; enforce it programmatically.
