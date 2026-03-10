@@ -24,6 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
+ALLOWED_WEIGHT_TECHNIQUES = ["pca_1", "pca_pct", "pls_1", "pls_pct", "sparse_pca", "unpenalized", "lasso", "ridge"]
 
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
@@ -707,6 +708,15 @@ class AdaptiveWeights:
             raise ValueError(
                 "A group penalisation was requested but `group_index` is missing."
             )
+
+        if not isinstance(self.weight_technique, str):
+            raise ValueError(f"weight_technique must be a string. Got {type(self.weight_technique)}")
+        if self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES:
+            raise ValueError(
+                f"weight_technique '{self.weight_technique}' is not supported. "
+                f"Must be one of: {ALLOWED_WEIGHT_TECHNIQUES}"
+            )
+
         tmp_weight: Optional[np.ndarray] = None
         if bool_individual:
             if self.individual_weights is None:
