@@ -24,6 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
+ALLOWED_WEIGHT_TECHNIQUES = ["pca_1", "pca_pct", "pls_1", "pls_pct", "sparse_pca", "unpenalized", "lasso", "ridge"]
 
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
@@ -694,6 +695,12 @@ class AdaptiveWeights:
         y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
+        if not isinstance(self.weight_technique, str):
+            raise ValueError("weight_technique must be a string.")
+        if self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES:
+            raise ValueError(
+                f"weight_technique must be one of {ALLOWED_WEIGHT_TECHNIQUES}; got {self.weight_technique}."
+            )
         X, y = check_X_y(
             X,
             y,

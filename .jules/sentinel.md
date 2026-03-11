@@ -1,0 +1,5 @@
+## 2024-05-18 - Insecure reflection via getattr
+
+**Vulnerability:** The `weight_technique` parameter in `AdaptiveWeights` (within `asgl/skmodels.py`) was used to dynamically call methods via `getattr(self, "_w" + self.weight_technique)(X=X, y=y)` without any validation on `weight_technique`. A malicious user could pass a crafted string to execute arbitrary parameter-less methods starting with `_w` or to trigger arbitrary attribute accesses, which could lead to application errors or, in worse scenarios, code execution if such a vulnerable method existed.
+**Learning:** Even internal class string arguments that build method names should be strictly validated against an allowlist, especially when passed directly to reflection utilities like `getattr` or `eval`. Scikit-learn's `check_scalar` or basic type checking isn't sufficient for strings.
+**Prevention:** Always validate string inputs that are used in dynamic method/attribute resolution against an explicit allowlist (e.g., `ALLOWED_WEIGHT_TECHNIQUES`) before invoking `getattr`.
