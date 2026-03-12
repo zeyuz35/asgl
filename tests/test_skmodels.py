@@ -924,3 +924,20 @@ def test_grid_search():
 
 if __name__ == "__main__":
     pytest.main()
+
+def test_weight_technique_validation():
+    """Test that invalid weight_technique raises ValueError."""
+    import numpy as np
+    from asgl.skmodels import Regressor
+
+    reg = Regressor(weight_technique="__init__", penalization="alasso")
+    X = np.random.randn(10, 5)
+    y = np.random.randn(10)
+
+    import pytest
+    with pytest.raises(ValueError, match="weight_technique must be one of"):
+        reg.fit(X, y)
+
+    reg_invalid_type = Regressor(weight_technique=123, penalization="alasso")
+    with pytest.raises(ValueError, match="weight_technique must be a string"):
+        reg_invalid_type.fit(X, y)

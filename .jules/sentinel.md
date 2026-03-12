@@ -1,0 +1,4 @@
+## 2024-03-12 - [Insecure Reflection/Attribute Access in AdaptiveWeights]
+**Vulnerability:** The `weight_technique` parameter in the `AdaptiveWeights` class was passed directly into a `getattr(self, "_w" + self.weight_technique)` call without any validation. This allowed arbitrary string inputs to execute any method on the class starting with `_w` or potentially throw confusing internal errors/expose internal state if a user passed `__init__` or similar.
+**Learning:** In scikit-learn style estimators, string parameters that are concatenated to build method names and dynamically invoked via `getattr` must be strictly validated against an explicit allowlist before execution to prevent insecure reflection.
+**Prevention:** Always validate string inputs that map to internal methods or attributes using an explicit allowlist of expected values, especially when those inputs come directly from user-provided constructor parameters.
