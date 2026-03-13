@@ -14,6 +14,7 @@ from sklearn.metrics import mean_squared_error
         dict(penalization="foo"),        # unsupported penalty
         dict(lambda1=-0.1),              # negative λ
         dict(alpha=1.5),                 # alpha outside [0, 1]
+        dict(penalization="alasso", weight_technique="foo"), # unsupported weight technique
     ],
 )
 def test_bad_constructor_arguments_raises(bad_kwargs):
