@@ -737,16 +737,14 @@ class AdaptiveWeights:
                 if tmp_weight is None:
                     tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
                 group_index = np.asarray(group_index, dtype=int)
-                unique_groups, group_counts, indices_per_group = _get_group_info(group_index)
-                group_weights = []
-                for g in unique_groups:
-                    mask = indices_per_group[g]
-                    norm = np.linalg.norm(tmp_weight[mask], ord=2)
-                    group_weights.append(
-                        1.0
-                        / (np.power(norm, self.group_power_weight) + self.weight_tol)
-                    )
-                self.group_weights_ = np.asarray(group_weights)
+
+                # O(N log N) vectorized group norm calculations replacing the O(N*G) loop
+                unique_groups, inverse_indices = np.unique(group_index, return_inverse=True)
+                # Efficiently aggregate squared values by group using bincount
+                group_sums = np.bincount(inverse_indices, weights=tmp_weight**2)
+                norms = np.sqrt(group_sums)
+
+                self.group_weights_ = 1.0 / (np.power(norms, self.group_power_weight) + self.weight_tol)
             else:
                 self.group_weights_ = self.group_weights
 
