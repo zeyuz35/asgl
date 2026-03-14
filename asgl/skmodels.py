@@ -24,6 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
+ALLOWED_CANON_BACKENDS = {"CPP", "SCIPY", "COO", "RUST"}
 ALLOWED_WEIGHT_TECHNIQUES = {
     "pca_1",
     "pca_pct",
@@ -126,6 +127,12 @@ class BaseModel(BaseEstimator, RegressorMixin):
         if (self.penalization is not None) and (self.penalization not in ALL_PENALTIES):
             raise ValueError(
                 f"penalization must be one of {sorted(ALL_PENALTIES)}; got {self.penalization}."
+            )
+        # Check canon_backend
+        check_scalar(self.canon_backend, "canon_backend", target_type=(str, type(None)))
+        if self.canon_backend is not None and self.canon_backend not in ALLOWED_CANON_BACKENDS:
+            raise ValueError(
+                f"canon_backend must be one of {sorted(ALLOWED_CANON_BACKENDS)}; got {self.canon_backend}."
             )
 
     def _quantile_function(self, X) -> cp.Expression:
@@ -378,7 +385,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 is_binary_float = len(unique_y_values) <= 2 and np.all(
                     np.isin(unique_y_values, [0.0, 1.0])
                 )
-                if (not is_binary_int) | (not is_binary_float):
+                if (not is_binary_int) and (not is_binary_float):
                     raise ValueError(
                         f"For logistic model, y must contain only 0 and 1 (or 0.0, 1.0)."
                     )
