@@ -724,13 +724,9 @@ class AdaptiveWeights:
                 group_index = np.asarray(group_index, dtype=int)
 
                 # O(N log N) vectorized group norm calculations replacing the O(N*G) loop
-                argsort_indices = np.argsort(group_index, kind='mergesort')
-                sorted_group_index = group_index[argsort_indices]
-                unique_groups, group_starts = np.unique(sorted_group_index, return_index=True)
-
-                sorted_weights = tmp_weight[argsort_indices]
-                # Efficiently aggregate squared values by group
-                group_sums = np.add.reduceat(sorted_weights**2, group_starts)
+                unique_groups, inverse_indices = np.unique(group_index, return_inverse=True)
+                # Efficiently aggregate squared values by group using bincount
+                group_sums = np.bincount(inverse_indices, weights=tmp_weight**2)
                 norms = np.sqrt(group_sums)
 
                 self.group_weights_ = 1.0 / (np.power(norms, self.group_power_weight) + self.weight_tol)
