@@ -24,7 +24,7 @@ GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
 ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
 ALLOWED_MODELS = ["lm", "qr", "logit"]
-ALLOWED_WEIGHT_TECHNIQUES = [
+ALLOWED_WEIGHT_TECHNIQUES = {
     "pca_1",
     "pca_pct",
     "pls_1",
@@ -33,7 +33,7 @@ ALLOWED_WEIGHT_TECHNIQUES = [
     "unpenalized",
     "lasso",
     "ridge",
-]
+}
 
 
 def _get_group_info(group_index: np.ndarray) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
