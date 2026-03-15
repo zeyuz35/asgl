@@ -579,10 +579,14 @@ class AdaptiveWeights:
         n_comp = np.searchsorted(fractions_of_explained_variance, self.variability_pct)
         # Ensure n_comp is at least 1
         n_comp = max(1, n_comp)
-        pls = PLSRegression(n_components=n_comp, scale=False)
-        pls.fit(X, y)
-        # pls.coef_ has shape (n_outputs, n_features), transpose to (n_features, n_outputs)
-        tmp_weight = np.abs(np.asarray(pls.coef_).T)
+
+        # PLSRegression extracts components sequentially.
+        # To get coefficients for a smaller number of components (n_comp), avoid refitting a new model
+        # which can be extremely slow on large matrices; instead compute them directly from the initial full fit.
+        pls_coef = np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)
+
+        # pls_coef has shape (n_features, n_outputs)
+        tmp_weight = np.abs(pls_coef)
         # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
         if tmp_weight.ndim > 1:
             tmp_weight = np.linalg.norm(tmp_weight, axis=1)
