@@ -1,13 +1,13 @@
+import time
 import numpy as np
-from sklearn.cross_decomposition import PLSRegression
-X, y = np.random.rand(100, 10), np.random.rand(100)
-pls1 = PLSRegression(n_components=9, scale=False).fit(X, y)
-pls2 = PLSRegression(n_components=3, scale=False).fit(X, y)
-print("Coefs equal:", np.allclose(pls1.coef_, pls2.coef_))
-# Actually PLS coefs for n_components=3 are NOT the first 3 columns of n_components=9
-# PLS coefs are computed for the whole model.
-print("Shape 9:", pls1.coef_.shape)
-print("Shape 3:", pls2.coef_.shape)
-# They are both (10, 1)!
-# Are they equal?
-print("Equal:", np.allclose(pls1.coef_, pls2.coef_))
+from asgl.skmodels import AdaptiveWeights
+from sklearn.datasets import make_regression
+
+X, y = make_regression(n_samples=500, n_features=200, n_targets=1, noise=1.0, random_state=42)
+aw = AdaptiveWeights(weight_technique='pls_pct', variability_pct=0.5)
+
+start = time.time()
+for _ in range(10):
+    w1 = aw._wpls_pct(X, y)
+t1 = time.time()
+print("Time taken by optimized _wpls_pct (10 iterations):", t1 - start)
