@@ -389,7 +389,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
                 is_binary_float = len(unique_y_values) <= 2 and np.all(
                     np.isin(unique_y_values, [0.0, 1.0])
                 )
-                if (not is_binary_int) | (not is_binary_float):
+                if (not is_binary_int) and (not is_binary_float):
                     raise ValueError(
                         f"For logistic model, y must contain only 0 and 1 (or 0.0, 1.0)."
                     )
