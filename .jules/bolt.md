@@ -9,3 +9,7 @@
 ## 2026-03-11 - [Vectorized Group Weight Aggregation]
 **Learning:** `np.linalg.norm` iteratively computed in a Python `for` loop across masks created from a large dictionary mapping scales very poorly as O(N*G) where N is number of features and G is number of groups. We discovered that calculating grouped 2-norms for adaptive weights (`fit_weights`) can bottleneck model fitting severely when dealing with many features/groups.
 **Action:** Replace `for` loops that compute group statistics by masking, with vectorized indices using `np.argsort` followed by `np.unique(..., return_index=True)` and grouping the aggregated statistics with `np.add.reduceat`. This brings complexity to O(N log N) effectively reducing calculation times from seconds/minutes to milliseconds on typical data scales.
+
+## 2026-03-20 - Extracting PLS Components without Refitting
+**Learning:** scikit-learn's `PLSRegression` extracts components sequentially. When selecting `n_comp` components after performing a full fit to calculate explained variance, fitting a new `PLSRegression(n_components=n_comp)` is redundant and slow. The components for the smaller model are identical to the first `n_comp` components of the full model.
+**Action:** To get the coefficients for a smaller number of PLS components without refitting, calculate them directly from the full fit using the dot product of the sliced `x_rotations_` and `y_loadings_` matrices: `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`.
