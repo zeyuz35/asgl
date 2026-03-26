@@ -13,3 +13,7 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2026-03-26 - Optimizing Inference Paths in scikit-learn compatible Estimators
+**Learning:** Inference functions like `predict`, `predict_proba`, and `decision_function` are often called in tight loops or with very large arrays. Branching on input types (e.g., `sparse.issparse(X)`) and using methods that reallocate and copy arrays (like `np.vstack(...).T` or mapping boolean masks to arrays) causes significant and measurable overhead.
+**Action:** Use polymorphic operators like `@` instead of explicit `if/else` branching for sparse vs dense matrix multiplication. For array building, preallocate with `np.empty` and use slice assignment rather than horizontal/vertical stacking which involves deep copies. For simple boolean mappings, use `np.where` which executes entirely in C rather than generating intermediate masking arrays in Python.
