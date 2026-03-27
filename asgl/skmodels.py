@@ -426,7 +426,11 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+        # Preallocate array to avoid intermediate list allocations and transposition
+        out = np.empty((proba_pos_class.shape[0], 2), dtype=proba_pos_class.dtype)
+        out[:, 0] = 1 - proba_pos_class
+        out[:, 1] = proba_pos_class
+        return out
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
@@ -434,10 +438,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
         if self._estimator_type == "classifier":
             # self.classes_ should be [0, 1]
             # Threshold decision function output at 0 for class labels
-            indices = (raw_predictions >= 0).astype(
-                int
-            )  # 0 if raw_pred <= 0, 1 if raw_pred > 0
-            return self.classes_[indices]
+            # Avoid intermediate integer array allocations and boolean-to-int casting
+            return np.where(raw_predictions >= 0, self.classes_[1], self.classes_[0])
         else:  # Regressor
             return raw_predictions
 
