@@ -411,11 +411,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
         intercept = self.intercept_ if self.fit_intercept else 0
-        predictions = (
-            X @ self.coef_ + intercept
-            if sparse.issparse(X)
-            else np.dot(X, self.coef_) + intercept
-        )
+        # Performance optimization: @ handles both sparse and dense efficiently, avoiding issparse check
+        predictions = X @ self.coef_ + intercept
         return predictions
 
     def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
@@ -426,7 +423,11 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+        # Performance optimization: Preallocate array to avoid multiple intermediate arrays and stacking
+        out = np.empty((proba_pos_class.shape[0], 2), dtype=float)
+        out[:, 0] = 1 - proba_pos_class
+        out[:, 1] = proba_pos_class
+        return out
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
@@ -434,10 +435,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
         if self._estimator_type == "classifier":
             # self.classes_ should be [0, 1]
             # Threshold decision function output at 0 for class labels
-            indices = (raw_predictions >= 0).astype(
-                int
-            )  # 0 if raw_pred <= 0, 1 if raw_pred > 0
-            return self.classes_[indices]
+            # Performance optimization: np.where avoids intermediate boolean and integer array allocations
+            return np.where(raw_predictions >= 0, self.classes_[1], self.classes_[0])
         else:  # Regressor
             return raw_predictions
 
