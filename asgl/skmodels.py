@@ -426,7 +426,12 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+        # Preallocating an empty array and filling it via slices avoids the memory overhead
+        # and extra transpositions of np.vstack([...]).T, significantly improving performance.
+        proba = np.empty((proba_pos_class.shape[0], 2), dtype=proba_pos_class.dtype)
+        proba[:, 0] = 1 - proba_pos_class
+        proba[:, 1] = proba_pos_class
+        return proba
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
