@@ -13,3 +13,7 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2026-04-02 - Memory Efficiency in Predict Proba
+**Learning:** For scikit-learn compatible `predict_proba` implementations, building the output probabilities by stacking arrays via `np.vstack([...]).T` introduces unnecessary intermediate array allocations and transposition overhead, especially problematic for large datasets with many predictions.
+**Action:** Preallocate the output array using `np.empty((n_samples, 2), dtype=...)` and assign the inverse and positive class probabilities directly to column slices (`out[:, 0] = ...`, `out[:, 1] = ...`). This is significantly more memory-efficient and demonstrably faster than `np.vstack`.
