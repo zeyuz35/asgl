@@ -270,34 +270,34 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def _ridge(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        pen = self.lambda1 * cp.sum_squares(beta_var)
+        pen = cp.sum_squares(np.sqrt(self.lambda1) * beta_var)
         return pen
 
     def _lasso(
         self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
     ) -> cp.Expression:
-        pen = self.lambda1 * cp.norm1(beta_var)
+        pen = cp.norm1(self.lambda1 * beta_var)
         return pen
 
     def _gl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
-        sqrt_sizes = np.sqrt(group_sizes)
+        scaled_weights = self.lambda1 * np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
         )
-        pen = self.lambda1 * cp.sum(cp.multiply(sqrt_sizes, group_norms))
+        pen = cp.sum(cp.multiply(scaled_weights, group_norms))
         return pen
 
     def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         group_param = self.lambda1 * (1 - self.alpha)
         individual_param = self.lambda1 * self.alpha
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
-        sqrt_sizes = np.sqrt(group_sizes)
+        scaled_weights = group_param * np.sqrt(group_sizes)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
         )
-        group_penalization = group_param * cp.sum(cp.multiply(sqrt_sizes, group_norms))
-        individual_penalization = individual_param * cp.norm1(beta_var)
+        group_penalization = cp.sum(cp.multiply(scaled_weights, group_norms))
+        individual_penalization = cp.norm1(individual_param * beta_var)
         pen = individual_penalization + group_penalization
         return pen
 
@@ -426,7 +426,12 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+
+        # Preallocate array for performance instead of np.vstack([...]).T
+        proba = np.empty((proba_pos_class.shape[0], 2))
+        proba[:, 1] = proba_pos_class
+        proba[:, 0] = 1.0 - proba_pos_class
+        return proba
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
@@ -909,9 +914,9 @@ class Regressor(BaseModel, AdaptiveWeights):
     ) -> cp.Expression:
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        pen = self.lambda1 * cp.sum_squares(
-            cp.multiply(weights, beta_var)
+        scaled_weights = np.sqrt(self.lambda1) * np.asarray(self.individual_weights_).reshape(-1, 1)
+        pen = cp.sum_squares(
+            cp.multiply(scaled_weights, beta_var)
         )
         return pen
 
@@ -920,41 +925,37 @@ class Regressor(BaseModel, AdaptiveWeights):
     ) -> cp.Expression:
         mx, my = beta_var.shape
         # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        pen = self.lambda1 * cp.norm1(cp.multiply(weights, beta_var))
+        scaled_weights = self.lambda1 * np.asarray(self.individual_weights_).reshape(-1, 1)
+        pen = cp.norm1(cp.multiply(scaled_weights, beta_var))
         return pen
 
     def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
-        sqrt_sizes = np.sqrt(group_sizes)
-        group_weights = sqrt_sizes * self.group_weights_
+        scaled_group_weights = self.lambda1 * np.sqrt(group_sizes) * self.group_weights_
         mx, my = beta_var.shape
         # For each group, compute the norm of all features in that group across all outputs
         # This gives the 2-norm of the group's coefficients (treating each output separately)
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
-        pen = self.lambda1 * cp.sum(cp.multiply(group_weights, group_norms))
+        pen = cp.sum(cp.multiply(scaled_group_weights, group_norms))
         return pen
 
     def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
-        individual_param = self.lambda1 * self.alpha
         mx, my = beta_var.shape
         # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
-        weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-        group_param = self.lambda1 * (1 - self.alpha)
+        scaled_individual_weights = (self.lambda1 * self.alpha) * np.asarray(self.individual_weights_).reshape(-1, 1)
         unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
-        sqrt_sizes = np.sqrt(group_sizes)
-        group_weights = sqrt_sizes * self.group_weights_
+        scaled_group_weights = (self.lambda1 * (1 - self.alpha)) * np.sqrt(group_sizes) * self.group_weights_
         # For each group, compute the norm of all features in that group across all outputs
         group_norms = cp.hstack(
             [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
         )
-        individual_penalization = individual_param * cp.norm1(
-            cp.multiply(weights, beta_var)
+        individual_penalization = cp.norm1(
+            cp.multiply(scaled_individual_weights, beta_var)
         )
-        group_penalization = group_param * cp.sum(
-            cp.multiply(group_weights, group_norms)
+        group_penalization = cp.sum(
+            cp.multiply(scaled_group_weights, group_norms)
         )
         pen = individual_penalization + group_penalization
         return pen
