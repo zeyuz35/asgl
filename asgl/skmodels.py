@@ -711,6 +711,21 @@ class AdaptiveWeights:
                 f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; "
                 f"got {self.weight_technique}."
             )
+        check_scalar(
+            self.weight_tol,
+            "weight_tol",
+            target_type=(int, float),
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.variability_pct,
+            "variability_pct",
+            target_type=(int, float),
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="right",
+        )
         X, y = check_X_y(
             X,
             y,
