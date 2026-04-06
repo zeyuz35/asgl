@@ -906,6 +906,21 @@ def test_predict():
                                    err_msg='Failed prediction and / or metric computation')
 
 
+def test_error_weight_tol_zero():
+    X = np.array([[1.0, 0.0], [0.0, 1.0]])
+    y = np.array([1.0, 0.0])
+    # Setting weight_tol to 0.0 or below should raise an error
+    model = Regressor(model='lm', penalization='alasso', weight_technique='unpenalized', weight_tol=0.0)
+    with pytest.raises(ValueError, match="weight_tol == 0.0, must be > 0.0"):
+        model.fit(X, y)
+
+def test_error_variability_pct_invalid():
+    X = np.array([[1.0, 0.0], [0.0, 1.0]])
+    y = np.array([1.0, 0.0])
+    model = Regressor(model='lm', penalization='alasso', weight_technique='pca_pct', variability_pct=1.5)
+    with pytest.raises(ValueError, match="variability_pct == 1.5, must be <= 1.0"):
+        model.fit(X, y)
+
 def test_grid_search():
     data = np.loadtxt('data.csv', delimiter=",", dtype=float)
     X = data[:, :-1]
