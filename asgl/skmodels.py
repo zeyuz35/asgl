@@ -17,12 +17,14 @@ from scipy import sparse
 ArrayOrSparse = Union[np.ndarray, sparse.spmatrix]
 
 # Define constants for penalization types
-INDIV_NONADAPTIVE = ["lasso", "ridge", "sgl"]
-INDIV_ADAPTIVE = ["alasso", "aridge", "asgl"]
-GROUP_NONADAPTIVE = ["gl", "sgl"]
-GROUP_ADAPTIVE = ["agl", "asgl"]
-ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
-ALLOWED_MODELS = ["lm", "qr", "logit"]
+INDIV_NONADAPTIVE = {"lasso", "ridge", "sgl"}
+INDIV_ADAPTIVE = {"alasso", "aridge", "asgl"}
+GROUP_NONADAPTIVE = {"gl", "sgl"}
+GROUP_ADAPTIVE = {"agl", "asgl"}
+ALL_PENALTIES = INDIV_NONADAPTIVE | INDIV_ADAPTIVE | GROUP_ADAPTIVE | GROUP_NONADAPTIVE
+GROUP_PENALTIES = GROUP_NONADAPTIVE | GROUP_ADAPTIVE
+ADAPTIVE_PENALTIES = INDIV_ADAPTIVE | GROUP_ADAPTIVE
+ALLOWED_MODELS = {"lm", "qr", "logit"}
 ALLOWED_WEIGHT_TECHNIQUES = {
     "pca_1",
     "pca_pct",
@@ -387,7 +389,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
             y = y.astype(int)
             self.classes_ = np.array([0, 1])  # Assuming 0 and 1 are the classes
         if (
-            self.penalization in (GROUP_NONADAPTIVE + GROUP_ADAPTIVE)
+            self.penalization in GROUP_PENALTIES
             and group_index is None
         ):
             raise ValueError(
@@ -426,7 +428,10 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+        proba = np.empty((proba_pos_class.shape[0], 2), dtype=proba_pos_class.dtype)
+        proba[:, 0] = 1 - proba_pos_class
+        proba[:, 1] = proba_pos_class
+        return proba
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
@@ -966,7 +971,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         group_index: Optional[Sequence[int]] = None,
     ):
         self._check_attributes()
-        if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
+        if self.penalization in ADAPTIVE_PENALTIES:
             self.fit_weights(X, y, group_index)
         # Call the fit method of the parent class (BaseModel) to perform the main fitting logic.
         super().fit(X, y, group_index)

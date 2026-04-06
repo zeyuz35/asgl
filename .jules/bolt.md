@@ -13,3 +13,11 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2024-05-15 - Fast Memory Allocation in predict_proba
+**Learning:** scikit-learn compatible `predict_proba` implementations can be made faster and more memory-efficient by avoiding `np.vstack([...]).T`. `np.vstack` constructs an intermediate array and creates memory overhead, while `.T` returns a view that may not be contiguous.
+**Action:** Preallocate an array directly using `np.empty((N, 2), dtype=...)` and assign columns using slices (`proba[:, 0] = ...`, `proba[:, 1] = ...`).
+
+## 2024-05-15 - Optimizing Runtime Penalty Membership Checks
+**Learning:** Checking penalty types against concatenated lists (e.g. `self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE)`) reconstructs the lists on every call and performs O(N) lookup. This generates unnecessary overhead during runtime validation in methods like `fit` and model initialization.
+**Action:** Use Python `set` for penalty categories (`INDIV_ADAPTIVE = {"alasso", ...}`) and compute combinations once as module-level constants (`ADAPTIVE_PENALTIES = INDIV_ADAPTIVE | GROUP_ADAPTIVE`). This guarantees O(1) membership checks and avoids O(N) list operations.
