@@ -818,6 +818,19 @@ def test_asgl_qr():
 
 # ERROR HANDLING ------------------------------------------------------------------------------------------------------
 
+def test_adaptive_weights_validation():
+    data = np.loadtxt('data.csv', delimiter=",", dtype=float)
+    X = data[:, :-1]
+    y = data[:, -1]
+    # Test weight_tol <= 0.0 validation
+    model = Regressor(penalization="alasso", weight_tol=0.0)
+    with pytest.raises(ValueError, match="weight_tol == 0.0, must be > 0.0"):
+        model.fit(X, y)
+
+    # Test variability_pct > 1.0 validation
+    model = Regressor(penalization="alasso", variability_pct=1.5)
+    with pytest.raises(ValueError, match="variability_pct == 1.5, must be <= 1.0"):
+        model.fit(X, y)
 
 def test_errors():
     data = np.loadtxt('data.csv', delimiter=",", dtype=float)

@@ -706,6 +706,21 @@ class AdaptiveWeights:
         y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
+        check_scalar(
+            self.weight_tol,
+            "weight_tol",
+            target_type=(int, float),
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.variability_pct,
+            "variability_pct",
+            target_type=(int, float),
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="right",
+        )
         if not isinstance(self.weight_technique, str) or self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES:
             raise ValueError(
                 f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; "
