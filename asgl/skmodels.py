@@ -21,7 +21,13 @@ INDIV_NONADAPTIVE = ["lasso", "ridge", "sgl"]
 INDIV_ADAPTIVE = ["alasso", "aridge", "asgl"]
 GROUP_NONADAPTIVE = ["gl", "sgl"]
 GROUP_ADAPTIVE = ["agl", "asgl"]
-ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
+
+INDIV_ADAPTIVE_SET = set(INDIV_ADAPTIVE)
+GROUP_ADAPTIVE_SET = set(GROUP_ADAPTIVE)
+GROUP_PENALTIES = set(GROUP_NONADAPTIVE + GROUP_ADAPTIVE)
+ADAPTIVE_PENALTIES = set(INDIV_ADAPTIVE + GROUP_ADAPTIVE)
+ALL_PENALTIES = set(INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE)
+
 ALLOWED_MODELS = ["lm", "qr", "logit"]
 ALLOWED_WEIGHT_TECHNIQUES = {
     "pca_1",
@@ -387,7 +393,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
             y = y.astype(int)
             self.classes_ = np.array([0, 1])  # Assuming 0 and 1 are the classes
         if (
-            self.penalization in (GROUP_NONADAPTIVE + GROUP_ADAPTIVE)
+            self.penalization in GROUP_PENALTIES
             and group_index is None
         ):
             raise ValueError(
@@ -696,8 +702,8 @@ class AdaptiveWeights:
 
     def _check_type_penalization(self) -> Tuple[bool, bool]:
         return (
-            self.penalization in INDIV_ADAPTIVE,
-            self.penalization in GROUP_ADAPTIVE,
+            self.penalization in INDIV_ADAPTIVE_SET,
+            self.penalization in GROUP_ADAPTIVE_SET,
         )
 
     def fit_weights(
@@ -966,7 +972,7 @@ class Regressor(BaseModel, AdaptiveWeights):
         group_index: Optional[Sequence[int]] = None,
     ):
         self._check_attributes()
-        if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
+        if self.penalization in ADAPTIVE_PENALTIES:
             self.fit_weights(X, y, group_index)
         # Call the fit method of the parent class (BaseModel) to perform the main fitting logic.
         super().fit(X, y, group_index)
