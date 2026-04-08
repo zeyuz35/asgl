@@ -99,18 +99,19 @@ class BaseModel(BaseEstimator, RegressorMixin):
         Validate constructor arguments.
         Raises ValueError If any argument is outside the allowed domain.
         """
+        import numbers
         # Numerical arguments
         check_scalar(
             self.lambda1,
             "lambda1",
-            target_type=(int, float),
+            target_type=numbers.Real,
             min_val=0.0,
             include_boundaries="left",
         )
         check_scalar(
             self.alpha,
             "alpha",
-            target_type=(int, float),
+            target_type=numbers.Real,
             min_val=0.0,
             max_val=1.0,
             include_boundaries="both",
@@ -118,7 +119,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_scalar(
             self.quantile,
             "quantile",
-            target_type=(int, float),
+            target_type=numbers.Real,
             min_val=0.0,
             max_val=1.0,
             include_boundaries="neither",
@@ -753,6 +754,22 @@ class AdaptiveWeights:
                 f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; "
                 f"got {self.weight_technique}."
             )
+        import numbers
+        check_scalar(
+            self.weight_tol,
+            "weight_tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.variability_pct,
+            "variability_pct",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="both",
+        )
         X, y = check_X_y(
             X,
             y,
