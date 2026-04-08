@@ -13,3 +13,11 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2024-04-08 - O(1) Penalty Lookups and predict_proba Array Allocation
+**Learning:**
+1. The codebase repeatedly concatenates penalty lists (e.g. `GROUP_NONADAPTIVE + GROUP_ADAPTIVE`) and uses `in` for membership checks during model initialization and `fit`, which scale linearly `O(n)`.
+2. Python's `np.vstack([...]).T` inside the `predict_proba` method carries high memory-allocation overhead since it needs to construct intermediate list arrays and re-allocate during vertical stacking and transposition.
+**Action:**
+1. Replace all list penalty definitions with Python sets, allowing O(1) membership lookup. Furthermore, pre-compute combined sets (`GROUP_PENALTIES`, `ADAPTIVE_PENALTIES`) so the python interpreter does not compute runtime concatenation operations on each `.fit()` call.
+2. In `predict_proba`, use `np.empty()` to pre-allocate an array with the exact dimensions (`N x 2`) and assign output columns directly instead of using `np.vstack`.
