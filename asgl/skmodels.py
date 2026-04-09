@@ -544,31 +544,20 @@ class AdaptiveWeights:
         """
         Weights based on principal component analysis
         """
-        if sparse.issparse(X):
-            max_comp = np.min(X.shape) - 1
-            # Run PCA once with max_comp
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
-            t = pca.fit_transform(X)
-            explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
-            n_comp = (
-                np.searchsorted(explained_variance_ratio_cumsum, self.variability_pct)
-                + 1
-            )
-            n_comp = min(n_comp, max_comp)  # Safety upper bound
-            t = t[:, :n_comp]
-            p = pca.components_[:n_comp].T
-        else:
-            max_comp = np.min(X.shape) - 1
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
-            t = pca.fit_transform(X)
-            explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
-            n_comp = (
-                np.searchsorted(explained_variance_ratio_cumsum, self.variability_pct)
-                + 1
-            )
-            n_comp = min(n_comp, max_comp)
-            t = t[:, :n_comp]
-            p = pca.components_[:n_comp].T
+        max_comp = np.min(X.shape) - 1
+        # Use arpack for sparse to avoid dense conversion, auto for dense for better performance
+        solver = "arpack" if sparse.issparse(X) else "auto"
+        pca = PCA(n_components=max_comp, svd_solver=solver)
+
+        t = pca.fit_transform(X)
+        explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
+        n_comp = (
+            np.searchsorted(explained_variance_ratio_cumsum, self.variability_pct)
+            + 1
+        )
+        n_comp = min(n_comp, max_comp)  # Safety upper bound
+        t = t[:, :n_comp]
+        p = pca.components_[:n_comp].T
         unpenalized_model = BaseModel(
             model=self.model,
             penalization=None,
