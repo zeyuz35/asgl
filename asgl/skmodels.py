@@ -1,6 +1,7 @@
 import warnings
 from typing import Sequence, Optional, Tuple, Union, Dict
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
+import numbers
 import cvxpy as cp
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
@@ -767,6 +768,21 @@ class AdaptiveWeights:
         y: ArrayOrSparse,
         group_index: Optional[Sequence[int]] = None,
     ):
+        check_scalar(
+            self.weight_tol,
+            "weight_tol",
+            target_type=numbers.Real,
+            min_val=0.0,
+            include_boundaries="neither",
+        )
+        check_scalar(
+            self.variability_pct,
+            "variability_pct",
+            target_type=numbers.Real,
+            min_val=0.0,
+            max_val=1.0,
+            include_boundaries="both",
+        )
         if (
             not isinstance(self.weight_technique, str)
             or self.weight_technique not in ALLOWED_WEIGHT_TECHNIQUES
