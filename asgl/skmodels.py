@@ -432,11 +432,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
     def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
         intercept = self.intercept_ if self.fit_intercept else 0
-        predictions = (
-            X @ self.coef_ + intercept
-            if sparse.issparse(X)
-            else np.dot(X, self.coef_) + intercept
-        )
+        # The '@' operator efficiently handles both dense NumPy arrays and
+        # SciPy sparse matrices, avoiding explicit branching.
+        predictions = X @ self.coef_ + intercept
         return predictions
 
     def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
@@ -447,7 +445,12 @@ class BaseModel(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "classes_")  # Ensure classes_ is available
         decision = self.decision_function(X)
         proba_pos_class = expit(decision)
-        return np.vstack([1 - proba_pos_class, proba_pos_class]).T
+
+        # Pre-allocate array for memory efficiency and faster prediction
+        proba = np.empty((proba_pos_class.shape[0], 2))
+        proba[:, 1] = proba_pos_class
+        proba[:, 0] = 1 - proba_pos_class
+        return proba
 
     def predict(self, X: ArrayOrSparse) -> np.ndarray:
         check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
