@@ -13,3 +13,9 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+## 2026-03-13 - Absorbing scalars into weight arrays
+**Learning:** In CVXPY parameterized problems, pre-calculating and absorbing scalar constants (like `lambda1` or size scalings) into NumPy weight arrays before invoking CVXPY atoms (e.g., `cp.multiply`, `cp.norm1`) mathematically matches the original expression but reduces the size of the abstract syntax tree, which significantly decreases canonicalization overhead per fit.
+**Action:** When defining parameterized objectives in CVXPY, pre-compute scalar multiples into the NumPy constant arrays before forming the CVXPY expression.
+## 2026-03-13 - cp.Constant(X) and Sparse Matrices
+**Learning:** While direct multiplication (`X @ beta`) works perfectly for dense matrices in CVXPY, if `X` is a `scipy.sparse` matrix, SciPy does not recognize CVXPY variables natively and falls back to an element-by-element operation. This generates a massive N-dimensional array of individual CVXPY expressions, leading to devastating memory and performance degradation.
+**Action:** When multiplying a potentially sparse matrix `X` with a CVXPY variable, ALWAYS wrap it in `cp.Constant(X)` (e.g., `cp.Constant(X) @ beta`). Never "optimize" away the constant wrapper if sparse inputs are possible.
