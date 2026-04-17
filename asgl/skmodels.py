@@ -559,7 +559,9 @@ class AdaptiveWeights:
             p = pca.components_[:n_comp].T
         else:
             max_comp = np.min(X.shape) - 1
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
+            # svd_solver="auto" intelligently falls back to LAPACK full SVD instead of
+            # the slower iterative "arpack" when extracting maximum components from dense matrices.
+            pca = PCA(n_components=max_comp, svd_solver="auto")
             t = pca.fit_transform(X)
             explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
             n_comp = (
