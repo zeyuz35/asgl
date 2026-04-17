@@ -141,6 +141,20 @@ class BaseModel(BaseEstimator, RegressorMixin):
             raise ValueError(
                 f"canon_backend must be one of {sorted(ALLOWED_CANON_BACKENDS)}; got {self.canon_backend}."
             )
+        # solver validation
+        installed_solvers = cp.installed_solvers()
+        allowed_solvers = set(installed_solvers + ["default"])
+        if isinstance(self.solver, str):
+            if self.solver not in allowed_solvers:
+                raise ValueError(f"Invalid solver '{self.solver}'. Must be one of {sorted(list(allowed_solvers))}")
+        elif isinstance(self.solver, (list, tuple)):
+            for s in self.solver:
+                if not isinstance(s, str):
+                    raise ValueError(f"Solver '{s}' is not a string. Must be one of {sorted(list(allowed_solvers))}")
+                if s not in allowed_solvers:
+                    raise ValueError(f"Invalid solver '{s}'. Must be one of {sorted(list(allowed_solvers))}")
+        else:
+            raise ValueError(f"solver must be a string or a sequence of strings. Got {type(self.solver)}")
 
     def _quantile_function(self, X) -> cp.Expression:
         """cp quantile loss function."""
@@ -215,9 +229,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
                         stacklevel=2,
                     )
                     failed_solvers.add(solver_name)
-            except (ValueError, cp.error.SolverError, cp.error.DCPError):
+            except Exception as e:
                 warnings.warn(
-                    f"Solver {solver_name} failed. Trying next solver.",
+                    f"Solver {solver_name} failed with {type(e).__name__}: {e}. Trying next solver.",
                     RuntimeWarning,
                     stacklevel=2,
                 )
@@ -263,7 +277,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
                         break
                     else:
                         failed_solvers.add(alt_solver)
-                except (ValueError, cp.error.SolverError, cp.error.DCPError):
+                except Exception:
                     failed_solvers.add(alt_solver)
 
         if (
