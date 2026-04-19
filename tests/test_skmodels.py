@@ -18,6 +18,10 @@ from sklearn.metrics import mean_squared_error
         dict(
             penalization="alasso", weight_technique="foo"
         ),  # unsupported weight technique
+        dict(penalization="alasso", weight_tol=0.0), # weight_tol must be > 0.0
+        dict(penalization="alasso", weight_tol=-1.0), # weight_tol must be > 0.0
+        dict(penalization="alasso", variability_pct=1.5), # variability_pct must be in (0, 1]
+        dict(penalization="alasso", variability_pct=0.0), # variability_pct must be in (0, 1]
     ],
 )
 def test_bad_constructor_arguments_raises(bad_kwargs):
