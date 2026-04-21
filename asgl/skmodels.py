@@ -535,6 +535,7 @@ class AdaptiveWeights:
         if sparse.issparse(X):
             pca = PCA(n_components=1, svd_solver="arpack")
         else:
+            # Optimized: Use 'auto' solver for dense matrices to leverage LAPACK
             pca = PCA(n_components=1, svd_solver="auto")
         pca.fit(X)
         tmp_weight = np.abs(pca.components_).ravel()
@@ -559,7 +560,8 @@ class AdaptiveWeights:
             p = pca.components_[:n_comp].T
         else:
             max_comp = np.min(X.shape) - 1
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
+            # Optimized: Use 'auto' solver for dense matrices to leverage LAPACK
+            pca = PCA(n_components=max_comp, svd_solver="auto")
             t = pca.fit_transform(X)
             explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
             n_comp = (
