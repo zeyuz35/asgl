@@ -13,3 +13,7 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2024-04-23 - PCA Solver Performance for Near Full-Rank Requests
+**Learning:** In scikit-learn's `PCA`, using `svd_solver="arpack"` is highly optimized for extracting a small number of components. However, when requesting almost all components (e.g. `n_components = min(X.shape) - 1`), ARPACK becomes extremely slow due to excessive orthogonalization overhead.
+**Action:** When extracting a large number of components, use `svd_solver="auto"` which intelligently falls back to `"full"` (LAPACK's full SVD solver) when `n_components` is large, providing massive speedups without changing the results.

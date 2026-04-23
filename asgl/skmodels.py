@@ -547,7 +547,7 @@ class AdaptiveWeights:
         if sparse.issparse(X):
             max_comp = np.min(X.shape) - 1
             # Run PCA once with max_comp
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
+            pca = PCA(n_components=max_comp, svd_solver="auto")
             t = pca.fit_transform(X)
             explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
             n_comp = (
@@ -559,7 +559,7 @@ class AdaptiveWeights:
             p = pca.components_[:n_comp].T
         else:
             max_comp = np.min(X.shape) - 1
-            pca = PCA(n_components=max_comp, svd_solver="arpack")
+            pca = PCA(n_components=max_comp, svd_solver="auto")
             t = pca.fit_transform(X)
             explained_variance_ratio_cumsum = np.cumsum(pca.explained_variance_ratio_)
             n_comp = (
