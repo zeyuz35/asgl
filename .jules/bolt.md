@@ -13,3 +13,7 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+
+## 2026-03-13 - PCA `svd_solver` for Dense Matrices
+**Learning:** scikit-learn's `PCA` solver defaults to `"auto"`. However, if explicitly forced to use `"arpack"` (which uses SciPy's `svds` under the hood) for computing almost all singular values (e.g., `n_components = min(shape) - 1`), it performs very poorly compared to `"auto"`. The `"auto"` solver intelligently detects that a large fraction of components is requested and falls back to LAPACK's highly-optimized full SVD (`"full"`). Using `"arpack"` for extracting near-maximum components is an anti-pattern.
+**Action:** When extracting a large number of principal components (especially `min(shape) - 1`) on dense matrices, do not force `svd_solver="arpack"`. Use `svd_solver="auto"` (or `"full"`) instead to dramatically speed up PCA execution times.
