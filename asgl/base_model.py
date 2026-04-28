@@ -176,7 +176,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
             stacklevel=2,
           )
           failed_solvers.add(solver_name)
-      except (ValueError, cp.error.SolverError, cp.error.DCPError):
+      except Exception:
+        # Security enhancement: Broad exception catch prevents third-party solver errors
+        # (like mosek.Error) from crashing the application and causing Denial of Service.
         warnings.warn(
           f"Solver {solver_name} failed. Trying next solver.",
           RuntimeWarning,
@@ -221,7 +223,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
             break
           else:
             failed_solvers.add(alt_solver)
-        except (ValueError, cp.error.SolverError, cp.error.DCPError):
+        except Exception:
+          # Security enhancement: Catch all exceptions to prevent unhandled
+          # external solver errors from causing DoS and leaking stack traces.
           failed_solvers.add(alt_solver)
 
     if (
