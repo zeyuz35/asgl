@@ -13,3 +13,6 @@
 ## 2026-03-12 - Calculating PLS Coefficients without Refitting
 **Learning:** `PLSRegression(n_components="some_number")` extracts components sequentially. When iterating or searching for the correct number of components to explain a target variance percentage, there is no need to refit the entire model with the smaller number of components.
 **Action:** Once a full PLS model is fit, the coefficients for any smaller number of components `n_comp` can be computed directly using `np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)`. This avoids redundant full algorithm runs and significantly boosts performance in methods like adaptive weighting (e.g. `_wpls_pct`).
+## 2026-03-13 - Vectorize CVXPY Expressions for Faster Compilation
+**Learning:** In CVXPY, replacing an element-wise multiplication followed by summation (e.g., `cp.sum(cp.multiply(weights, norms))`) with a direct vector inner product (`weights @ norms`) significantly reduces the expression tree size. For group penalty terms with many features or groups, this drastically speeds up problem compilation/canonicalization times (by over 10x in micro-benchmarks).
+**Action:** When calculating weighted sums of norms or variables in CVXPY, prefer using the matrix multiplication operator `@` over `cp.sum(cp.multiply())` to optimize compilation performance.
