@@ -1812,14 +1812,14 @@ def test_errors():
     data = np.loadtxt("data.csv", delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.2, lambda1=0.1, solver="CLARABEL"
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 

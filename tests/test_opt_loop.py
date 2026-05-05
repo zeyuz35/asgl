@@ -1,6 +1,5 @@
 import time
 import numpy as np
-import scipy.sparse as sp
 
 group_index = np.repeat(np.arange(40), 5)
 unique_groups, group_starts, group_counts = np.unique(group_index, return_index=True, return_counts=True)
