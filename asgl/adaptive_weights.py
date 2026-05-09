@@ -1,6 +1,7 @@
 import warnings
 from typing import Sequence, Optional, Tuple, Union
-from sklearn.utils.validation import check_X_y
+from sklearn.utils.validation import check_X_y, check_scalar
+import numbers
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.decomposition import PCA
@@ -293,6 +294,39 @@ class AdaptiveWeights:
       raise ValueError(
         f"weight_technique must be one of {sorted(ALLOWED_WEIGHT_TECHNIQUES)}; "
         f"got {self.weight_technique}."
+      )
+    if self.individual_power_weight is not None:
+      check_scalar(
+        self.individual_power_weight,
+        "individual_power_weight",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="left",
+      )
+    if self.group_power_weight is not None:
+      check_scalar(
+        self.group_power_weight,
+        "group_power_weight",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="left",
+      )
+    if self.weight_tol is not None:
+      check_scalar(
+        self.weight_tol,
+        "weight_tol",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="neither",
+      )
+    if self.variability_pct is not None:
+      check_scalar(
+        self.variability_pct,
+        "variability_pct",
+        target_type=numbers.Real,
+        min_val=0.0,
+        max_val=1.0,
+        include_boundaries="both",
       )
     X, y = check_X_y(
       X,

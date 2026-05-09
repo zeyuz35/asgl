@@ -1,0 +1,5 @@
+## 2025-02-20 - Input Validation with Scikit-Learn
+
+**Vulnerability:** Weak input validation for numerical hyperparameters (like tolerance limits, alphas, component bounds).
+**Learning:** In machine learning libraries, missing type/boundary validation on hyperparameters doesn't inherently allow code execution or injection (unlike web inputs), but it introduces massive robustness and denial-of-service risks. Feeding malformed values (e.g., negative tolerances or non-floats) into underlying C++/solver bindings (like `cvxpy`) can cause unexpected system-level crashes, infinite loops, or divide-by-zero errors that standard Python error handling struggles to catch gracefully.
+**Prevention:** Always implement strong parameter bounds checking upon object initialization or immediately before usage using established frameworks like `sklearn.utils.validation.check_scalar` with precise minimum, maximum, and type boundary constraints. Specifically, when checking variables that could be ints or floats, use `numbers.Real`, and ALWAYS wrap validations of optional configuration parameters with `is not None` logic to prevent regressions on valid default states.

@@ -1,6 +1,8 @@
 from typing import Sequence, Optional, Union
 import cvxpy as cp
 import numpy as np
+import numbers
+from sklearn.utils.validation import check_scalar
 
 from .constants import (
   ArrayOrSparse,
@@ -153,6 +155,33 @@ class Regressor(BaseModel, AdaptiveWeights):
     self.individual_weights = individual_weights
     self.group_weights = group_weights
     self.weight_tol = weight_tol
+
+  def _check_attributes(self) -> None:
+    super()._check_attributes()
+    if self.lambda1_weights is not None:
+      check_scalar(
+        self.lambda1_weights,
+        "lambda1_weights",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="left",
+      )
+    if self.spca_alpha is not None:
+      check_scalar(
+        self.spca_alpha,
+        "spca_alpha",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="left",
+      )
+    if self.spca_ridge_alpha is not None:
+      check_scalar(
+        self.spca_ridge_alpha,
+        "spca_ridge_alpha",
+        target_type=numbers.Real,
+        min_val=0.0,
+        include_boundaries="left",
+      )
 
   # Penalized problems
   def _aridge(
