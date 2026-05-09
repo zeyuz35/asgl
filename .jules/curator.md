@@ -1,0 +1,3 @@
+## 2024-05-10 - Pandas dataframe column name preservation bug
+**Learning:** `asgl.base_model.BaseModel.fit` attempts to preserve feature names when fitting a model by checking `hasattr(X, 'columns') and callable(getattr(X, 'columns', None))`. However, Pandas DataFrame `columns` is a property/Index object, not a callable method. This causes the `feature_names_in_` attribute to silently remain `None` instead of capturing the column names, resulting in a loss of metadata.
+**Action:** Remove the `callable()` check when attempting to retrieve column names from objects like DataFrames, as properties are not callable but still contain the valid feature name metadata.
