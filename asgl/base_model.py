@@ -260,7 +260,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
     )
-    pen = self.lambda1 * cp.sum(cp.multiply(sqrt_sizes, group_norms))
+    # ⚡ Bolt Optimization: Use vector dot product instead of cp.sum(cp.multiply(...))
+    # This drastically reduces the cvxpy expression tree size and canonicalization time.
+    pen = self.lambda1 * (sqrt_sizes @ group_norms)
     return pen
 
   def _sgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
@@ -271,7 +273,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g]]) for g in unique_groups]
     )
-    group_penalization = group_param * cp.sum(cp.multiply(sqrt_sizes, group_norms))
+    # ⚡ Bolt Optimization: Use vector dot product instead of cp.sum(cp.multiply(...))
+    # This drastically reduces the cvxpy expression tree size and canonicalization time.
+    group_penalization = group_param * (sqrt_sizes @ group_norms)
     individual_penalization = individual_param * cp.norm1(beta_var)
     pen = individual_penalization + group_penalization
     return pen

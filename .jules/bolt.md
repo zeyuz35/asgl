@@ -1,0 +1,3 @@
+## 2025-02-20 - Optimizing CVXPY Canonicalization
+**Learning:** In `cvxpy`, canonicalizing element-wise multiplications followed by aggregations (like `cp.sum(cp.multiply(weights, norms))`) creates a larger internal expression tree and increases compilation time, especially for large matrices.
+**Action:** Use vector inner products (e.g., `weights @ norms`, or `cp.sum(weights.T @ cp.abs(beta_var))` for `cp.norm1(cp.multiply(weights, beta_var))`) where mathematically equivalent to significantly speed up model compilation. Ensure weights are non-negative to maintain DCP convexity when optimizing sum of norms.
