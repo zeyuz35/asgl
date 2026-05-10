@@ -80,12 +80,12 @@ class Regressor(BaseModel, AdaptiveWeights):
   spca_ridge_alpha: float, default=1e-2
       sparse PCA parameter. See sklearn implementation of sparse PCA for more details.
   individual_weights: array or None, default=None
-      An array containing the values of individual weights in adaptive penalizations. If this parameter is informed,
+      An array containing the values of individual weights in adaptive penalizations. If provided,
       it overrides the weight estimation process defined by parameter ``weight_technique`` and allows the user to
       provide custom weights.
   group_weights: array or None, default=None
-      An array containing the values of group weights in adaptive penalizations. If this parameter is informed,
-      it overrides the weight estimation process defined by parameter ``weight_technique``. and allows the user to
+      An array containing the values of group weights in adaptive penalizations. If provided,
+      it overrides the weight estimation process defined by parameter ``weight_technique`` and allows the user to
       provide custom weights.
   tol: float, default=1e-3
       The tolerance for a coefficient in the model to be considered as 0. Values smaller than ``tol`` are assumed to
