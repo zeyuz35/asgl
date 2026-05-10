@@ -1,0 +1,3 @@
+## 2024-05-10 - Optimize CVXPY canonicalization for group norms
+**Learning:** CVXPY canonicalization scales poorly when building expression trees with `cp.sum(cp.multiply(weights, norms))` or `cp.norm1(cp.multiply(weights, vars))`.
+**Action:** Replace element-wise multiplication and summation with equivalent mathematical vector inner products: `weights @ norms` for sum of element-wise products, `weights.T @ cp.abs(vars)` for 1-norms, and `(weights**2).T @ cp.square(vars)` for sum of squares. This dramatically reduces expression tree size and formulation time.
