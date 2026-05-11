@@ -1,0 +1,3 @@
+## 2025-02-24 - Pandas DataFrame feature name preservation
+**Learning:** `DataFrame.columns` is a pandas Index object (an iterable property), not a callable method. Using `callable(getattr(X, "columns", None))` evaluates to False, causing feature names to be silently discarded.
+**Action:** When extracting properties like `columns` from dataframes, check for the attribute's existence using `hasattr(X, "columns")` rather than verifying it's a callable. Ensure attributes correctly preserve their original types and arrays are correctly wrapped into standard formats (`np.asarray`) without discarding metadata due to flawed detection logic.
