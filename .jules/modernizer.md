@@ -1,0 +1,3 @@
+## 2024-05-11 - CVXPY Canonicalization Optimization
+**Learning:** In CVXPY expression trees, replacing element-wise multiplications followed by a sum `cp.sum(cp.multiply(A, B))` with a vector inner product `A @ B` reduces expression tree size and speeds up canonicalization time without changing the mathematical result.
+**Action:** Replace `cp.sum(cp.multiply(W, N))` with `W @ N` where mathematically equivalent. Also replace `cp.sum(cp.logistic(P) - cp.multiply(Y, P))` with `cp.sum(cp.logistic(P)) - Y @ P` for logit loss, taking care to check if Y might be a sparse array where direct `@` isn't supported unless handled.
