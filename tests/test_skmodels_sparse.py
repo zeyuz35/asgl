@@ -18,7 +18,7 @@ _DATA_LOGIT = Path(__file__).parent / "data_logit.csv"
     [
         dict(model="foo"),  # unsupported model
         dict(penalization="foo"),  # unsupported penalty
-        dict(lambda1=-0.1),  # negative λ
+        dict(lambda1=-0.1),  # negative lambda1
         dict(alpha=1.5),  # alpha outside [0, 1]
     ],
 )

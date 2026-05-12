@@ -12,11 +12,11 @@
 
 `asgl` fits penalized regression models for high-dimensional variable selection.
 It supports linear (`lm`), quantile (`qr`), and logistic (`logit`) regression,
-with a rich menu of penalizations — from plain Lasso to Adaptive Sparse Group
-Lasso (ASGL) — all through a single scikit-learn compatible `Regressor` class.
+with a rich menu of penalizations - from plain Lasso to Adaptive Sparse Group
+Lasso (ASGL) - all through a single scikit-learn compatible `Regressor` class.
 
 The package is especially useful when:
-- Variables have a known group structure (gene pathways, dummy-variable families, …)
+- Variables have a known group structure (gene pathways, dummy-variable families, ...)
 - You need simultaneous group- and individual-level sparsity
 - You want adaptive weights to improve oracle properties
 - Your design matrix `X` is a `scipy.sparse` matrix
@@ -93,7 +93,7 @@ Regressor(
     fit_intercept=True,
     lambda1=0.1,                 # penalization strength
     alpha=0.5,                   # lasso/group-lasso tradeoff for sgl/asgl
-    solver='default',            # str or list[str] — CVXPY solver(s)
+    solver='default',            # str or list[str] - CVXPY solver(s)
     canon_backend='CPP',         # 'CPP' | 'SCIPY' | 'COO'
     verbose=False,
     weight_technique='pca_pct',  # adaptive weight method (adaptive penalties only)
@@ -132,7 +132,7 @@ Regressor(
 | `predict(X)` | Predict (regression output or class labels for logit) |
 | `predict_proba(X)` | Class probabilities (logit only) |
 | `decision_function(X)` | Raw linear scores |
-| `score(X, y)` | R² (regression) or accuracy (classifier) |
+| `score(X, y)` | R-squared (regression) or accuracy (classifier) |
 
 **Fitted attributes**
 
@@ -147,7 +147,7 @@ Regressor(
 
 ## Examples
 
-### 1 — Quantile regression with Adaptive Sparse Group Lasso + cross-validation
+### 1 - Quantile regression with Adaptive Sparse Group Lasso + cross-validation
 
 ```python
 import numpy as np
@@ -174,7 +174,7 @@ print(cv.best_params_)
 print(cv.score(X_test, y_test))
 ```
 
-### 2 — Sparse input (`scipy.sparse`)
+### 2 - Sparse input (`scipy.sparse`)
 
 ```python
 import scipy.sparse as sp
@@ -190,7 +190,7 @@ model.fit(X, y)
 print(f"Non-zero coefficients: {(model.coef_ != 0).sum()}")
 ```
 
-### 3 — Multi-output regression
+### 3 - Multi-output regression
 
 ```python
 import numpy as np
@@ -208,7 +208,7 @@ model.fit(X, y, group_index=group_index)
 print(model.coef_.shape)   # (n_features, 2)
 ```
 
-### 4 — Solver fallback
+### 4 - Solver fallback
 
 ```python
 from asgl import Regressor
@@ -220,7 +220,7 @@ model.fit(X_train, y_train)
 print(model.solver_stats_['solver_name'])
 ```
 
-### 5 — Logistic regression with custom decision threshold
+### 5 - Logistic regression with custom decision threshold
 
 ```python
 import numpy as np
@@ -293,8 +293,8 @@ See [CONTRIBUTORS.md](CONTRIBUTORS.md) for details.
 - `solver` accepts a list of names with automatic fallback
 - New parameters: `verbose`, `canon_backend`
 - Performance: vectorized group weights, PLS without refitting
-- Internal refactor: `skmodels.py` → 5 focused modules
-- Test suite: 24 → 96 test functions
+- Internal refactor: `skmodels.py` -> 5 focused modules
+- Test suite: 24 -> 96 test functions
 - Requires Python >= 3.10
 
 ### 2.1.4
@@ -315,5 +315,5 @@ See [CONTRIBUTORS.md](CONTRIBUTORS.md) for details.
 
 ## License
 
-GPL-3.0 — open source, modifications must be redistributed under the same license.
+GPL-3.0 - open source, modifications must be redistributed under the same license.
 See [LICENSE](LICENSE) for full text.

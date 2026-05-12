@@ -17,7 +17,7 @@ _DATA_LOGIT = Path(__file__).parent / "data_logit.csv"
     [
         dict(model="foo"),  # unsupported model
         dict(penalization="foo"),  # unsupported penalty
-        dict(lambda1=-0.1),  # negative λ
+        dict(lambda1=-0.1),  # negative lambda1
         dict(alpha=1.5),  # alpha outside [0, 1]
         dict(
             penalization="alasso", weight_technique="foo"
@@ -1823,7 +1823,7 @@ def test_errors():
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 
