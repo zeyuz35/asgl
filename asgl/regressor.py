@@ -161,7 +161,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     mx, my = beta_var.shape
     # Reshape weights to (mx, 1) for proper broadcasting across my outputs
     weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-    pen = self.lambda1 * cp.sum_squares(cp.multiply(weights, beta_var))
+    pen = self.lambda1 * cp.sum((weights**2).T @ cp.square(beta_var))
     return pen
 
   def _alasso(
