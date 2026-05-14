@@ -465,7 +465,7 @@ def test_gl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.8, lambda1=0, solver="CLARABEL"
@@ -648,7 +648,7 @@ def test_sgl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="sgl", quantile=0.8, lambda1=0, solver="CLARABEL"
@@ -1816,14 +1816,14 @@ def test_errors():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.2, lambda1=0.1, solver="CLARABEL"
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 
@@ -1945,6 +1945,27 @@ def test_grid_search():
         assert expected_output.get(key) == value, (
             f"Expected {key} to be {value}, but got {expected_output.get(key)}"
         )
+
+
+def test_feature_names_preserved():
+    class MockDataFrame:
+        def __init__(self, data, columns):
+            self.data = data
+            self.columns = columns
+            self.shape = data.shape
+            self.ndim = data.ndim
+
+        def __array__(self):
+            return self.data
+
+    X = MockDataFrame(np.random.randn(10, 3), columns=["a", "b", "c"])
+    y = np.random.randn(10)
+
+    model = Regressor(model="lm", penalization="lasso")
+    model.fit(X, y)
+
+    assert model.feature_names_in_ is not None
+    assert list(model.feature_names_in_) == ["a", "b", "c"]
 
 
 if __name__ == "__main__":
