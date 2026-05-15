@@ -1,0 +1,3 @@
+## 2024-05-15 - Method-level dependencies wrapped in module level blocks
+**Learning:** scikit-learn tags (`ClassifierTags`, `RegressorTags`) were imported inside `__sklearn_tags__` in `base_model.py`. Moving these imports to the module level allows `scikit-learn` imports to happen centrally, improving readability and structure, while maintaining backwards-compatibility via `try...except ImportError: pass`.
+**Action:** Always move local module imports to the top level unless lazy loading is explicitly required for significant performance or dependency-circle breaking, but wrap them appropriately when backward-compatibility with older libraries is required.
