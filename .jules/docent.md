@@ -1,0 +1,3 @@
+## 2024-05-16 - targeted lint fixes and global formatters
+**Learning:** In the `asgl` repository, global auto-formatters (e.g., `ruff format`) should be avoided to preserve `git blame` and project history. Targeted linting fixes (such as `# noqa: F841`) are preferred to prevent unintended test breakage.
+**Action:** I will apply isolated code modifications strictly aligned with the specific memory rules and confirmed in the trace, rather than blindly applying formatters or broad `sed` commands across files.
