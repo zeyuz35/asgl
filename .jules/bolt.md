@@ -1,0 +1,3 @@
+## 2024-05-16 - CVXPY Expression Tree Optimization
+**Learning:** In CVXPY, `cp.sum(cp.multiply(A, B))` builds a massive, computationally expensive element-wise multiplication expression tree when parsed by the canonicalization engine. Replacing this with a native dot product `A.T @ B` (or equivalent vector inner product operations) achieves mathematically identical results but dramatically reduces canonicalization time without impacting the final solver's execution time.
+**Action:** Always inspect CVXPY models for linear combinations disguised as element-wise multiplication loops or sum-of-multiplies, and convert them directly to dot product representations to significantly optimize problem compilation phase times.
