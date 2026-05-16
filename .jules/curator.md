@@ -1,0 +1,3 @@
+## 2024-05-16 - Fix DataFrame column preservation
+**Learning:** `BaseModel.fit` incorrectly checks if `X.columns` is callable to determine if it should preserve feature names. In Pandas DataFrames, `.columns` is a property (an `Index` object), not a method. Thus, `callable(getattr(X, 'columns', None))` is always `False` for valid Pandas DataFrames, resulting in silent metadata loss (`feature_names_in_` evaluates to `None` instead of preserving the attribute).
+**Action:** Remove the `callable()` check when inspecting for `.columns` attribute to correctly preserve feature names from Pandas-like objects.
