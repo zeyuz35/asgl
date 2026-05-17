@@ -1,0 +1,3 @@
+## 2024-05-18 - Fix feature_names_in_ preservation for pandas DataFrames
+**Learning:** In `asgl.base_model.BaseModel.fit`, the previous check `if hasattr(X, "columns") and callable(getattr(X, "columns", None)):` incorrectly assumed that the `columns` attribute on a pandas DataFrame was callable. In reality, DataFrame `columns` are `pandas.Index` objects, which are not callable. This caused `feature_names_in_` to not be preserved when passing a DataFrame.
+**Action:** Changed the condition to `if hasattr(X, "columns") and not callable(getattr(X, "columns", None)):` (or simply removing the `callable` check) to correctly capture the `columns` attribute from pandas DataFrames.
