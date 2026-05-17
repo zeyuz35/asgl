@@ -1,0 +1,3 @@
+## 2024-05-18 - Fix ruff F401, F841, F541 errors
+**Learning:** `ruff check` in the CI/local environment highlights several minor hygiene issues: unused `pytest` import in `tests/test_leakage.py`, unused `numpy` in `tests/test_solver_fallback.py`, unused variables `group_index` in error tests, and an unnecessary f-string. Fixing these aligns with Binder's goal to keep the package and tests lean and compliant.
+**Action:** Use `replace_with_git_merge_diff` to surgically remove unused imports and unused variables. Remove f-strings where no variables are interpolated. Run tests and linters again to verify.
