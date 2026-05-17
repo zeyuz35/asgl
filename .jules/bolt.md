@@ -1,0 +1,3 @@
+## 2024-05-17 - [CVXPY canonicalization optimization]
+**Learning:** In cvxpy expressions, calculating `cp.sum(cp.multiply(a, b))` (element-wise multiplication followed by sum) has a significantly larger canonicalized expression tree and takes longer to compile than calculating the equivalent dot product `a @ b` when a and b are vectors of the same dimension.
+**Action:** Replaced `cp.sum(cp.multiply(sqrt_sizes, group_norms))` with `sqrt_sizes @ group_norms` in grouped lasso penalties to speed up canonicalization. Make sure to avoid `cp.sum_squares(cp.multiply())` to `(W**2) @ cp.square(b)` since `cp.square` explodes the elements constraint matrix and makes the actual solve significantly slower even if canonicalization is faster.
