@@ -4,8 +4,7 @@ import numpy as np
 
 from .constants import (
   ArrayOrSparse,
-  INDIV_ADAPTIVE,
-  GROUP_ADAPTIVE,
+  ADAPTIVE_PENALTIES,
 )
 from .utils import _get_group_info
 from .base_model import BaseModel
@@ -213,7 +212,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_index: Optional[Sequence[int]] = None,
   ):
     self._check_attributes()
-    if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
+    if self.penalization in ADAPTIVE_PENALTIES:
       self.fit_weights(X, y, group_index)
     # Call the fit method of the parent class (BaseModel) to perform the main fitting logic.
     super().fit(X, y, group_index)

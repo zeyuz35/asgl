@@ -6,12 +6,14 @@ from scipy import sparse
 ArrayOrSparse = Union[np.ndarray, sparse.spmatrix]
 
 # Define constants for penalization types
-INDIV_NONADAPTIVE = ["lasso", "ridge", "sgl"]
-INDIV_ADAPTIVE = ["alasso", "aridge", "asgl"]
-GROUP_NONADAPTIVE = ["gl", "sgl"]
-GROUP_ADAPTIVE = ["agl", "asgl"]
-ALL_PENALTIES = INDIV_NONADAPTIVE + INDIV_ADAPTIVE + GROUP_ADAPTIVE + GROUP_NONADAPTIVE
-ALLOWED_MODELS = ["lm", "qr", "logit"]
+INDIV_NONADAPTIVE = {"lasso", "ridge", "sgl"}
+INDIV_ADAPTIVE = {"alasso", "aridge", "asgl"}
+GROUP_NONADAPTIVE = {"gl", "sgl"}
+GROUP_ADAPTIVE = {"agl", "asgl"}
+GROUP_PENALTIES = GROUP_NONADAPTIVE | GROUP_ADAPTIVE
+ADAPTIVE_PENALTIES = INDIV_ADAPTIVE | GROUP_ADAPTIVE
+ALL_PENALTIES = INDIV_NONADAPTIVE | INDIV_ADAPTIVE | GROUP_ADAPTIVE | GROUP_NONADAPTIVE
+ALLOWED_MODELS = {"lm", "qr", "logit"}
 ALLOWED_WEIGHT_TECHNIQUES = {
   "pca_1",
   "pca_pct",

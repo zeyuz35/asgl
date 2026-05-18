@@ -13,8 +13,7 @@ from .constants import (
   ALLOWED_MODELS,
   ALL_PENALTIES,
   ALLOWED_CANON_BACKENDS,
-  GROUP_NONADAPTIVE,
-  GROUP_ADAPTIVE,
+  GROUP_PENALTIES,
 )
 from .utils import _get_group_info
 
@@ -364,7 +363,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
       y = y.astype(int)
       self.classes_ = np.array([0, 1])  # Assuming 0 and 1 are the classes
     if (
-      self.penalization in (GROUP_NONADAPTIVE + GROUP_ADAPTIVE) and group_index is None
+      self.penalization in GROUP_PENALTIES and group_index is None
     ):
       raise ValueError(
         "The penalization provided requires fitting the model with a group_index parameter but no group_index was detected."
