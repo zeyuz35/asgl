@@ -1,0 +1,3 @@
+## 2024-05-19 - Fast canonicalization of cvxpy expressions
+**Learning:** CVXPY canonicalization tree heavily affects canonicalization performance. Replacing `cp.sum(cp.multiply(A, B))` with inner product `A @ B`, and `cp.norm1(cp.multiply(W, B))` with `cp.sum(W.T @ cp.abs(B))` drastically reduces canonicalization time without breaking correctness. For logistic regression objectives, `cp.sum(cp.logistic(pred) - cp.multiply(y, pred))` can be optimized to `cp.sum(cp.logistic(pred)) - y @ pred`.
+**Action:** Always optimize vector/matrix element-wise multiplication into inner products when possible before running solvers, particularly inside inner loops or CV pipelines.
