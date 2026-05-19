@@ -13,8 +13,7 @@ from .adaptive_weights import AdaptiveWeights
 
 
 class Regressor(BaseModel, AdaptiveWeights):
-  """
-  Parameters
+  """Parameters
   ----------
   model: str, default = 'lm'
       Model to be fit. Currently, accepts:
@@ -39,7 +38,7 @@ class Regressor(BaseModel, AdaptiveWeights):
       ``model='qr'``
   fit_intercept: bool, default=True,
       Whether to calculate the intercept for this model. If set to False, no intercept will be used in calculations.
-  lambda1: float, defaul=0.1
+  lambda1: float, default=0.1
       Constant that multiplies the penalization, controlling the strength. Must be a non-negative float
       i.e. in `[0, inf)`. Larger values will result in larger penalizations.
   alpha: float, default=0.5
@@ -106,6 +105,7 @@ class Regressor(BaseModel, AdaptiveWeights):
       Independent term in the regression model
   n_features_in_: int
       Number of features seen during fit.
+
   """
 
   def __init__(
@@ -212,6 +212,24 @@ class Regressor(BaseModel, AdaptiveWeights):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the model according to the given training data.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
+    y : array-like of shape (n_samples,)
+        Target vector relative to X.
+    group_index : array-like of shape (n_features,), default=None
+        Group index for each feature.
+
+    Returns
+    -------
+    self : object
+        Fitted estimator.
+
+    """
     self._check_attributes()
     if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
       self.fit_weights(X, y, group_index)

@@ -54,8 +54,7 @@ class AdaptiveWeights:
     self.canon_backend = canon_backend
 
   def _wpca_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Weights based on the first principal component
+    """Weights based on the first principal component
     """
     if sparse.issparse(X):
       pca = PCA(n_components=1, svd_solver="arpack")
@@ -66,8 +65,7 @@ class AdaptiveWeights:
     return tmp_weight
 
   def _wpca_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Weights based on principal component analysis
+    """Weights based on principal component analysis
     """
     if sparse.issparse(X) and np.min(X.shape) > 1:
       max_comp = np.min(X.shape) - 1
@@ -117,8 +115,7 @@ class AdaptiveWeights:
     return tmp_weight
 
   def _wpls_1(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Weights based on the first partial least squares component
+    """Weights based on the first partial least squares component
     """
     if sparse.issparse(X):
       raise ValueError(
@@ -132,8 +129,7 @@ class AdaptiveWeights:
     return tmp_weight
 
   def _wpls_pct(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Weights based on partial least squares
+    """Weights based on partial least squares
     """
     if sparse.issparse(X):
       raise ValueError(
@@ -168,8 +164,7 @@ class AdaptiveWeights:
     return tmp_weight
 
   def _wsparse_pca(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Weights based on sparse principal component analysis.
+    """Weights based on sparse principal component analysis.
     """
     if sparse.issparse(X):
       raise ValueError(
@@ -219,8 +214,7 @@ class AdaptiveWeights:
     return tmp_weight
 
   def _wunpenalized(self, X: ArrayOrSparse, y: ArrayOrSparse) -> np.ndarray:
-    """
-    Only for low dimensional frameworks. Weights based on an unpenalized regression model
+    """Only for low dimensional frameworks. Weights based on an unpenalized regression model
     """
     unpenalized_model = BaseModel(
       model=self.model,

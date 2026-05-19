@@ -20,8 +20,7 @@ from .utils import _get_group_info
 
 
 class BaseModel(BaseEstimator, RegressorMixin):
-  """
-  Base class for penalized regression models using cp.
+  """Base class for penalized regression models using cp.
   """
 
   def __init__(
@@ -56,8 +55,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
       return "regressor"
 
   def _check_attributes(self) -> None:
-    """
-    Validate constructor arguments.
+    """Validate constructor arguments.
     Raises ValueError If any argument is outside the allowed domain.
     """
     # Numerical arguments
@@ -104,7 +102,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
       )
 
   def _quantile_function(self, X) -> cp.Expression:
-    """cp quantile loss function."""
+    """Cp quantile loss function."""
     # new implementation, should be more efficient avoiding abs
     # Uses a residual splitting approach
     q = float(self.quantile)
@@ -339,6 +337,24 @@ class BaseModel(BaseEstimator, RegressorMixin):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the model according to the given training data.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
+    y : array-like of shape (n_samples,)
+        Target vector relative to X.
+    group_index : array-like of shape (n_features,), default=None
+        Group index for each feature.
+
+    Returns
+    -------
+    self : object
+        Fitted estimator.
+
+    """
     self.feature_names_in_ = None
     if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
       self.feature_names_in_ = np.asarray(X.columns, dtype=object)
@@ -385,6 +401,19 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return self
 
   def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict confidence scores for samples.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The data matrix for which we want to get the predictions.
+
+    Returns
+    -------
+    ndarray of shape (n_samples,)
+        Confidence scores per (n_samples,).
+
+    """
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     intercept = self.intercept_ if self.fit_intercept else 0
     predictions = (
@@ -395,6 +424,20 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return predictions
 
   def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
+    """Probability estimates.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Vector to be scored, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
+
+    Returns
+    -------
+    T : array-like of shape (n_samples, n_classes)
+        Returns the probability of the sample for each class in the model.
+
+    """
     if self._estimator_type != "classifier":
       raise AttributeError(
         f"predict_proba is not available when model is '{self.model}'. It is only available for classifier models."
@@ -405,6 +448,19 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return np.vstack([1 - proba_pos_class, proba_pos_class]).T
 
   def predict(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict class labels for samples in X.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        The data matrix for which we want to get the predictions.
+
+    Returns
+    -------
+    y_pred : ndarray of shape (n_samples,)
+        Vector containing the class labels for each sample.
+
+    """
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     raw_predictions = self.decision_function(X)
     if self._estimator_type == "classifier":
@@ -440,6 +496,23 @@ class BaseModel(BaseEstimator, RegressorMixin):
     }
 
   def score(self, X, y, sample_weight=None):
+    """Return the score of the prediction.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Test samples.
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        True values for X.
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    score : float
+        Score of self.predict(X) wrt. y.
+
+    """
     if self._estimator_type == "regressor":
       return RegressorMixin.score(self, X, y, sample_weight)
     else:  # Classifier
