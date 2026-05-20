@@ -2024,7 +2024,7 @@ def test_errors():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
