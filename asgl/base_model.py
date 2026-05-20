@@ -8,6 +8,11 @@ from scipy.special import expit
 from sklearn.metrics import accuracy_score
 from scipy import sparse
 
+try:
+  from sklearn.utils._tags import ClassifierTags, RegressorTags
+except ImportError:
+  pass
+
 from .constants import (
   ArrayOrSparse,
   ALLOWED_MODELS,
@@ -423,14 +428,16 @@ class BaseModel(BaseEstimator, RegressorMixin):
     tags.target_tags.multi_output = True
     if self.model == "logit":
       tags.estimator_type = "classifier"
-      from sklearn.utils._tags import ClassifierTags
-
-      tags.classifier_tags = ClassifierTags(multi_class=False)
+      try:
+        tags.classifier_tags = ClassifierTags(multi_class=False)
+      except NameError:
+        pass
     else:
       tags.estimator_type = "regressor"
-      from sklearn.utils._tags import RegressorTags
-
-      tags.regressor_tags = RegressorTags()
+      try:
+        tags.regressor_tags = RegressorTags()
+      except NameError:
+        pass
     return tags
 
   def _more_tags(self):
