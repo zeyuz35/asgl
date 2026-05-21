@@ -417,7 +417,7 @@ def test_gl_lm():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="gl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -469,7 +469,7 @@ def test_gl_qr():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -564,7 +564,7 @@ def test_sgl_lm():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="sgl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -670,7 +670,7 @@ def test_sgl_qr():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -1566,7 +1566,7 @@ def test_agl_lm():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="lm",
@@ -1720,7 +1720,7 @@ def test_agl_qr():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -1791,7 +1791,7 @@ def test_asgl_lm():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="lm",
@@ -1951,7 +1951,7 @@ def test_asgl_qr():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -2024,7 +2024,7 @@ def test_errors():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -2067,7 +2067,7 @@ def test_predict():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="lm",
@@ -2092,7 +2092,7 @@ def test_grid_search():
     X = data[:, :-1]
     X = sparse.csr_matrix(X)
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="asgl", solver="CLARABEL")
     param_grid = {
