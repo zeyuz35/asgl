@@ -1,0 +1,3 @@
+## 2025-01-08 - Standardize Docstring Parameter Defaults Format
+**Learning:** The `asgl` codebase has a documentation standard where default parameter values in docstrings should be formatted consistently without spaces around the equals sign (e.g., `default='value'`, not `default = 'value'`).
+**Action:** Always check docstring parameter defaults and format them without spaces around the `=` sign when adding or updating docstrings.
