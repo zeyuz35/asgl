@@ -1,0 +1,7 @@
+## $(date +%Y-%m-%d) - Package Hygiene Improvements
+
+**Learning:** When addressing package hygiene, carefully manage dependencies introduced in scikit-learn compatibility methods (like `__sklearn_tags__`). Moving deep internal imports like `from sklearn.utils._tags import ClassifierTags` to the module level is crucial for hygiene but can break compatibility if users have an older version of scikit-learn where `_tags` does not exist.
+**Action:** Always wrap module-level imports of newer internal libraries in a `try...except ImportError: pass` block. When instantiating those classes inside methods, wrap the logic in a `try...except NameError: pass` block to gracefully skip unsupported functionality rather than crashing the application on import.
+
+**Learning:** Test suite runners (like pytest) can exhibit strange failure modes with fallback solvers (like CVXPY) when missing a commercial license (like mosek.lic). The mosek solver might raise a licensing `Error` instead of returning an `optimal` or `infeasible` status, which circumvents standard solver fallback logic and crashes tests.
+**Action:** If running a test suite without commercial solver licenses, explicitly uninstall the package (`pip uninstall -y mosek`) and remove the cached site-packages directory (`rm -rf .venv/lib/python3.*/site-packages/mosek*`) to forcibly prevent the cvxpy fallback system from attempting to use it and throwing license errors.

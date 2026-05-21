@@ -4,6 +4,8 @@ from pathlib import Path
 from asgl import Regressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error
+from sklearn.datasets import make_regression, make_classification
+from scipy import sparse
 
 _DATA = Path(__file__).parent / "data.csv"
 _DATA_LOGIT = Path(__file__).parent / "data_logit.csv"
@@ -465,7 +467,7 @@ def test_gl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.8, lambda1=0, solver="CLARABEL"
@@ -1816,14 +1818,14 @@ def test_errors():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.2, lambda1=0.1, solver="CLARABEL"
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 
@@ -1868,8 +1870,6 @@ def test_invalid_individual_weights_length_raises_error():
 
 
 def test_decision_function():
-    from sklearn.datasets import make_regression, make_classification
-    from scipy import sparse
 
     # Generate dense data
     X_reg, y_reg = make_regression(n_samples=50, n_features=10, random_state=42)
