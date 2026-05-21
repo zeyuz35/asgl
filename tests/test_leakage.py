@@ -1,7 +1,6 @@
 import numpy as np
 from asgl import Regressor
 from sklearn.datasets import make_regression
-import pytest
 
 def test_group_weights_leakage():
     # 1. Setup first dataset

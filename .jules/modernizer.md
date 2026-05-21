@@ -1,0 +1,3 @@
+## 2024-05-18 - Optimize CVXPY canonicalization with inner products
+**Learning:** CVXPY canonicalization of element-wise multiplication like `cp.sum(cp.multiply(A, B))` and `cp.norm1(cp.multiply(A, B))` is significantly slower than equivalent vector inner products `A @ B` and `cp.sum(A.T @ cp.abs(B))`, because `cp.multiply` compiles a huge element-wise operation tree.
+**Action:** When updating optimization code, prefer vector inner-products for scalar reductions. However, avoid replacing efficient built-ins like `cp.sum_squares(cp.multiply(...))` which already canonicalizes to a single efficient constraint, or logistic objectives where matrix math degrades actual solver times.
