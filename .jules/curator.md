@@ -1,0 +1,3 @@
+## 2024-05-24 - Fix silent feature names loss in BaseModel
+**Learning:** `BaseModel.fit` attempts to preserve pandas DataFrame feature names via `hasattr(X, "columns") and callable(getattr(X, "columns", None))`. However, pandas `DataFrame.columns` is a property (Index object), not a callable method. The condition `callable(...)` thus evaluates to False and fails to capture feature names.
+**Action:** Update the attribute validation condition to `hasattr(X, "columns") and not callable(getattr(X, "columns", None))` to correctly recognize pandas/polars dataframe `columns` properties and preserve structured metadata inputs.
