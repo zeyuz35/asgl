@@ -1,0 +1,3 @@
+## 2024-05-22 - [CVXPY Canonicalization Time Opt]
+**Learning:** Element-wise multiplications followed by summation (e.g., `cp.sum(cp.multiply(A, B))` and `cp.norm1(cp.multiply(weights, beta))`) create massive compiled expression trees in CVXPY, drastically increasing canonicalization times for models with many features/groups. Replacing them with functionally equivalent vector inner products (e.g., `A @ B` or `cp.sum(weights.T @ cp.abs(beta))`) shrinks the tree and significantly speeds up compilation without changing the underlying mathematical problem.
+**Action:** Always prefer vector inner products over `cp.sum(cp.multiply(...))` when scaling or penalizing variables in CVXPY constraints or objectives.
