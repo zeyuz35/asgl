@@ -414,7 +414,7 @@ def test_gl_lm():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="gl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -465,7 +465,7 @@ def test_gl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.8, lambda1=0, solver="CLARABEL"
@@ -547,7 +547,7 @@ def test_sgl_lm():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="sgl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -648,7 +648,7 @@ def test_sgl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="sgl", quantile=0.8, lambda1=0, solver="CLARABEL"
@@ -1446,7 +1446,7 @@ def test_agl_lm():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="agl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -1560,7 +1560,7 @@ def test_agl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -1628,7 +1628,7 @@ def test_asgl_lm():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="asgl", lambda1=0, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -1746,7 +1746,7 @@ def test_asgl_qr():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr",
@@ -1816,14 +1816,14 @@ def test_errors():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(
         model="qr", penalization="gl", quantile=0.2, lambda1=0.1, solver="CLARABEL"
     )
     with pytest.raises(
         ValueError,
-        match=f"The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
+        match="The penalization provided requires fitting the model with a group_index parameter but no group_index was detected.",
     ):
         model.fit(X, y)
 
@@ -1910,7 +1910,7 @@ def test_predict():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="asgl", lambda1=0.1, solver="CLARABEL")
     model.fit(X, y, group_index)
@@ -1928,7 +1928,7 @@ def test_grid_search():
     data = np.loadtxt(_DATA, delimiter=",", dtype=float)
     X = data[:, :-1]
     y = data[:, -1]
-    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])
+    group_index = np.array([1, 2, 2, 3, 3, 3, 4, 5, 5, 5])  # noqa: F841
 
     model = Regressor(model="lm", penalization="asgl", solver="CLARABEL")
     param_grid = {
