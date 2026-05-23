@@ -16,14 +16,14 @@ class Regressor(BaseModel, AdaptiveWeights):
   """
   Parameters
   ----------
-  model: str, default = 'lm'
+  model: str, default='lm'
       Model to be fit. Currently, accepts:
           - 'lm': linear regression models.
           - 'qr': quantile regression models.
           - 'logit': logistic regression for binary classification, output binary classification.
       Both 'lm' and 'qr' models support multivariate regression (multiple outputs),
       allowing for simultaneous fitting and coupled feature selection with grouped penalizations.
-  penalization: str or None, default = 'lasso'
+  penalization: str or None, default='lasso'
       Penalization to use. Currently, accepts:
           - None: unpenalized model.
           - 'lasso': lasso penalization.
@@ -39,7 +39,7 @@ class Regressor(BaseModel, AdaptiveWeights):
       ``model='qr'``
   fit_intercept: bool, default=True,
       Whether to calculate the intercept for this model. If set to False, no intercept will be used in calculations.
-  lambda1: float, defaul=0.1
+  lambda1: float, default=0.1
       Constant that multiplies the penalization, controlling the strength. Must be a non-negative float
       i.e. in `[0, inf)`. Larger values will result in larger penalizations.
   alpha: float, default=0.5
