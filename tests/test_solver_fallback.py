@@ -1,5 +1,5 @@
 import pytest
-import numpy as np
+
 import cvxpy as cp
 from asgl import Regressor
 from sklearn.datasets import make_regression

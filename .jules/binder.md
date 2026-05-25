@@ -1,0 +1,3 @@
+## 2025-05-25 - Moved tags import to top level
+**Learning:** scikit-learn tags related classes (`ClassifierTags`, `RegressorTags`) were imported directly inside `__sklearn_tags__`. According to Binder's boundaries, importing libraries inside function/method definitions is strictly prohibited unless there's a strong reason.
+**Action:** Move `ClassifierTags` and `RegressorTags` imports to the top level of `asgl/base_model.py`. Use a `try...except ImportError` block to handle potential backward compatibility issues with older `scikit-learn` versions if necessary, although currently the environment has scikit-learn 1.8.0.
