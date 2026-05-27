@@ -14,6 +14,8 @@ from .adaptive_weights import AdaptiveWeights
 
 class Regressor(BaseModel, AdaptiveWeights):
   """
+  Regressor model.
+
   Parameters
   ----------
   model: str, default = 'lm'
@@ -212,6 +214,23 @@ class Regressor(BaseModel, AdaptiveWeights):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """
+    Fit the model to the training data.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Training data.
+    y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
+        Target values.
+    group_index : array-like of shape (n_features,), default=None
+        Group index for each feature.
+
+    Returns
+    -------
+    self : object
+        Returns an instance of self.
+    """
     self._check_attributes()
     if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
       self.fit_weights(X, y, group_index)
