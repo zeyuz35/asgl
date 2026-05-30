@@ -168,9 +168,10 @@ class Regressor(BaseModel, AdaptiveWeights):
     self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
   ) -> cp.Expression:
     mx, my = beta_var.shape
-    # Reshape weights to (mx, 1) for proper broadcasting across my outputs
-    weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-    pen = self.lambda1 * cp.norm1(cp.multiply(weights, beta_var))
+    # Convert weights to 1D array for inner product
+    weights = np.asarray(self.individual_weights_).ravel()
+    # Use inner product instead of element-wise multiplication to optimize canonicalization time
+    pen = self.lambda1 * cp.sum(np.abs(weights) @ cp.abs(beta_var))
     return pen
 
   def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
@@ -183,14 +184,15 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
     )
-    pen = self.lambda1 * cp.sum(cp.multiply(group_weights, group_norms))
+    # Use inner product instead of element-wise multiplication to optimize canonicalization time
+    pen = self.lambda1 * (group_weights @ group_norms)
     return pen
 
   def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
     individual_param = self.lambda1 * self.alpha
     mx, my = beta_var.shape
-    # Reshape individual weights to (mx, 1) for proper broadcasting across my outputs
-    weights = np.asarray(self.individual_weights_).reshape(-1, 1)
+    # Convert weights to 1D array for inner product
+    weights = np.asarray(self.individual_weights_).ravel()
     group_param = self.lambda1 * (1 - self.alpha)
     unique_groups, group_sizes, indices_per_group = _get_group_info(group_index)
     sqrt_sizes = np.sqrt(group_sizes)
@@ -199,10 +201,11 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
     )
-    individual_penalization = individual_param * cp.norm1(
-      cp.multiply(weights, beta_var)
+    # Use inner products instead of element-wise multiplication to optimize canonicalization time
+    individual_penalization = individual_param * cp.sum(
+      np.abs(weights) @ cp.abs(beta_var)
     )
-    group_penalization = group_param * cp.sum(cp.multiply(group_weights, group_norms))
+    group_penalization = group_param * (group_weights @ group_norms)
     pen = individual_penalization + group_penalization
     return pen
 
