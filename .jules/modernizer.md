@@ -1,0 +1,3 @@
+## 2024-05-30 - Optimize CVXPY canonicalization
+**Learning:** In CVXPY, `cp.sum(cp.multiply(A, B))` and `cp.norm1(cp.multiply(A, B))` are much slower to canonicalize than using vector inner products like `A @ B` or `A.T @ cp.abs(B)` because `cp.multiply` creates element-wise nodes in the expression tree.
+**Action:** Replace `cp.sum(cp.multiply(w, norms))` with `w @ norms` and `cp.norm1(cp.multiply(w, beta))` with `np.abs(w).reshape(-1) @ cp.abs(beta)` for adaptive weights optimization. Note: `cp.sum_squares(cp.multiply(w, beta))` should not be changed as it is already optimal and canonicalizes to a single constraint.
