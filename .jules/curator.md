@@ -1,0 +1,3 @@
+## 2024-06-01 - Pandas columns attribute vs callable
+**Learning:** In sklearn-compatible estimators, checking if a dataset has feature names via `hasattr(X, "columns")` requires distinguishing between pandas DataFrames (where `columns` is a property/attribute) and PySpark DataFrames (where `columns` is a callable method). Using `callable(getattr(X, "columns", None))` evaluates to False for pandas, leading to silent attribute loss if used incorrectly as a positive condition.
+**Action:** When extracting feature names, check `hasattr(X, "columns") and not callable(getattr(X, "columns", None))` to correctly identify and preserve metadata from pandas DataFrames.
