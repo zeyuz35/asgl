@@ -16,14 +16,14 @@ class Regressor(BaseModel, AdaptiveWeights):
   """
   Parameters
   ----------
-  model: str, default = 'lm'
+  model: str, default='lm'
       Model to be fit. Currently, accepts:
           - 'lm': linear regression models.
           - 'qr': quantile regression models.
           - 'logit': logistic regression for binary classification, output binary classification.
       Both 'lm' and 'qr' models support multivariate regression (multiple outputs),
       allowing for simultaneous fitting and coupled feature selection with grouped penalizations.
-  penalization: str or None, default = 'lasso'
+  penalization: str or None, default='lasso'
       Penalization to use. Currently, accepts:
           - None: unpenalized model.
           - 'lasso': lasso penalization.
