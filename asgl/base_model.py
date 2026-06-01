@@ -4,6 +4,10 @@ from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
 import cvxpy as cp
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
+try:
+  from sklearn.utils._tags import ClassifierTags, RegressorTags
+except ImportError:
+  pass
 from scipy.special import expit
 from sklearn.metrics import accuracy_score
 from scipy import sparse
@@ -423,13 +427,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
     tags.target_tags.multi_output = True
     if self.model == "logit":
       tags.estimator_type = "classifier"
-      from sklearn.utils._tags import ClassifierTags
-
       tags.classifier_tags = ClassifierTags(multi_class=False)
     else:
       tags.estimator_type = "regressor"
-      from sklearn.utils._tags import RegressorTags
-
       tags.regressor_tags = RegressorTags()
     return tags
 
