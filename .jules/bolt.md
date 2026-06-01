@@ -1,0 +1,3 @@
+## 2024-06-01 - Optimize CVXPY canonicalization using vector inner products
+**Learning:** For CVXPY performance optimization, replacing element-wise multiplications followed by summation (`cp.sum(cp.multiply(A, B))`) or norms (`cp.norm1(cp.multiply(A, B))`) with a vector inner product (`A @ B` or `np.abs(A).reshape(-1) @ cp.abs(B)`) drastically reduces canonicalization time without degrading solver execution time by heavily shrinking the compiled expression tree.
+**Action:** Use inner products instead of element-wise multiplications for summations and norms where appropriate, except for logistic regression objectives which might be adversely affected.
