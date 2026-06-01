@@ -1,0 +1,3 @@
+## 2025-06-01 - Replace cp.multiply and cp.norm1 with vector inner products
+**Learning:** Using element-wise multiplications followed by summation or norms (e.g., `cp.norm1(cp.multiply(W, B))`) is slow to canonicalize in CVXPY. Replacing them with vector inner products (`W.T @ cp.abs(B)`) significantly shrinks the compiled expression tree and reduces canonicalization time without degrading solver execution time.
+**Action:** Whenever possible, replace `cp.sum(cp.multiply(A, B))` and `cp.norm1(cp.multiply(A, B))` with inner products, making sure to wrap the constant in `np.abs()` to comply with CVXPY's DCP rules.
