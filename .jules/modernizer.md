@@ -1,0 +1,3 @@
+## 2024-06-03 - CVXPY Inner Product Optimization
+**Learning:** In CVXPY, `cp.sum(cp.multiply(A, B))` or `cp.norm1(cp.multiply(A, B))` creates a much larger expression tree than `A @ B` (or `np.abs(A) @ cp.abs(B)`). This impacts canonicalization time significantly.
+**Action:** Replace `cp.sum(cp.multiply(weights, norms))` with `np.abs(weights) @ norms` and `cp.norm1(cp.multiply(weights, vars))` with `np.abs(weights).reshape(-1) @ cp.sum(cp.abs(vars), axis=1)`. Wait, for `beta_var` which is 2D, `cp.norm1(cp.multiply(weights, beta_var))` is equivalent to `np.abs(weights).reshape(-1) @ cp.sum(cp.abs(beta_var), axis=1)`. Let's test this carefully.
