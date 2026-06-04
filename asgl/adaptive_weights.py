@@ -108,7 +108,7 @@ class AdaptiveWeights:
     unpenalized_model.fit(X=t, y=y)
     beta_sol = unpenalized_model.coef_
     # Recover an estimation of the beta parameters and use it as weight
-    tmp_weight = np.abs(np.dot(p, beta_sol))
+    tmp_weight = np.abs(p @ beta_sol)
     # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
     if tmp_weight.ndim > 1:
       tmp_weight = np.linalg.norm(tmp_weight, axis=1)
@@ -158,7 +158,7 @@ class AdaptiveWeights:
     n_comp = np.clip(n_comp, 1, pls.x_rotations_.shape[1])
 
     # Calculate coefficients directly from the existing PLS model without refitting
-    coef = np.dot(pls.x_rotations_[:, :n_comp], pls.y_loadings_[:, :n_comp].T)
+    coef = pls.x_rotations_[:, :n_comp] @ pls.y_loadings_[:, :n_comp].T
     tmp_weight = np.abs(coef)
     # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
     if tmp_weight.ndim > 1:
@@ -210,7 +210,7 @@ class AdaptiveWeights:
     unpenalized_model.fit(X=t[:, 0:n_comp], y=y)
     beta_sol = unpenalized_model.coef_
     # Recover an estimation of the beta parameters and use it as weight
-    tmp_weight = np.abs(np.dot(p[:, 0:n_comp], beta_sol))
+    tmp_weight = np.abs(p[:, 0:n_comp] @ beta_sol)
     # If multi-output (2D coefficients), collapse to 1D by taking L2 norm across outputs
     if tmp_weight.ndim > 1:
       tmp_weight = np.linalg.norm(tmp_weight, axis=1)

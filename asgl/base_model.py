@@ -387,11 +387,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
   def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     intercept = self.intercept_ if self.fit_intercept else 0
-    predictions = (
-      X @ self.coef_ + intercept
-      if sparse.issparse(X)
-      else np.dot(X, self.coef_) + intercept
-    )
+    predictions = X @ self.coef_ + intercept
     return predictions
 
   def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
