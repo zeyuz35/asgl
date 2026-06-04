@@ -1,0 +1,3 @@
+## 2024-06-04 - Move scikit-learn tags to module level
+**Learning:** Inner function imports for specific scikit-learn classes (like `ClassifierTags` and `RegressorTags`) inside compatibility methods like `__sklearn_tags__` can degrade code readability and performance. Moving them to the module-level within a `try...except ImportError` block improves structure without breaking compatibility for environments with older scikit-learn versions.
+**Action:** Always wrap module-level imports of newer third-party library features in `try...except ImportError` blocks if the project aims to support a broader range of package versions. Use `pass` in the except block to avoid breaking original logical conditionals.
