@@ -1,0 +1,3 @@
+## 2024-06-06 - Move scikit-learn tags import to module level
+**Learning:** Inner imports inside method definitions (`__sklearn_tags__`) violate package hygiene and can slow down function calls. Module-level imports wrapped in `try...except ImportError` blocks with `pass` ensure compatibility with older dependencies (like scikit-learn versions without `_tags`) without adding runtime overhead on method calls.
+**Action:** Always place package dependencies at the module level. For optional or version-dependent imports, use a `try...except ImportError: pass` block at the module level rather than lazy inner imports, preserving cleaner namespacing and execution speed.
