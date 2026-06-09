@@ -1,9 +1,8 @@
-from typing import Union
 import numpy as np
 from scipy import sparse
 
 # Custom types
-ArrayOrSparse = Union[np.ndarray, sparse.spmatrix]
+ArrayOrSparse = np.ndarray | sparse.spmatrix
 
 # Define constants for penalization types
 INDIV_NONADAPTIVE = ["lasso", "ridge", "sgl"]
