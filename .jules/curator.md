@@ -1,0 +1,3 @@
+## YYYY-MM-DD - [Fixing feature_names_in_ preservation for pandas DataFrame]
+**Learning:** In pandas DataFrames, the `columns` attribute is an Index object, not a callable method. The check `callable(getattr(X, 'columns', None))` will return `False` for pandas DataFrames, leading to silent loss of the feature names metadata when `feature_names_in_` is set to `None`. This violates Curator's rule of preserving metadata.
+**Action:** When extracting feature names from inputs like pandas DataFrames in scikit-learn compatible modules, use `not callable(getattr(X, 'columns', None))` to correctly distinguish pandas DataFrames from other data structures (like PySpark DataFrames where `columns` is callable) and ensure `feature_names_in_` is properly populated.
