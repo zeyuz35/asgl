@@ -132,8 +132,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
         (model_prediction.shape[0] * model_prediction.shape[1],),
         order="F",
       )
-      return (1.0 / y.shape[0]) * cp.sum(
-        cp.logistic(pred_flat) - cp.multiply(y_flat, pred_flat)
+      return (1.0 / y.shape[0]) * (
+        cp.sum(cp.logistic(pred_flat)) - y_flat.T @ pred_flat
       )
     else:
       raise ValueError("Invalid value for model parameter.")
