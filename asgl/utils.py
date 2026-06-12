@@ -1,10 +1,9 @@
-from typing import Tuple, Dict
 import numpy as np
 
 
 def _get_group_info(
   group_index: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray, Dict[int, np.ndarray]]:
+) -> tuple[np.ndarray, np.ndarray, dict[int, np.ndarray]]:
   """
   Efficiently computes group sizes and indices for each group.
   """
