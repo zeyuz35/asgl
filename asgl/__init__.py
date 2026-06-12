@@ -1,3 +1,5 @@
+"""asgl package for penalized regression models."""
+
 from .regressor import Regressor  # noqa: F401
 from .base_model import BaseModel  # noqa: F401
 from .adaptive_weights import AdaptiveWeights  # noqa: F401
