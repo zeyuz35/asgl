@@ -18,6 +18,11 @@ from .constants import (
 )
 from .utils import _get_group_info
 
+try:
+  from sklearn.utils._tags import ClassifierTags, RegressorTags
+except ImportError:
+  pass
+
 
 class BaseModel(BaseEstimator, RegressorMixin):
   """
@@ -423,13 +428,9 @@ class BaseModel(BaseEstimator, RegressorMixin):
     tags.target_tags.multi_output = True
     if self.model == "logit":
       tags.estimator_type = "classifier"
-      from sklearn.utils._tags import ClassifierTags
-
       tags.classifier_tags = ClassifierTags(multi_class=False)
     else:
       tags.estimator_type = "regressor"
-      from sklearn.utils._tags import RegressorTags
-
       tags.regressor_tags = RegressorTags()
     return tags
 
