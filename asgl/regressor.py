@@ -1,3 +1,4 @@
+"""Module for Regressor class combining BaseModel and AdaptiveWeights."""
 from typing import Sequence, Optional, Union
 import cvxpy as cp
 import numpy as np
@@ -13,7 +14,8 @@ from .adaptive_weights import AdaptiveWeights
 
 
 class Regressor(BaseModel, AdaptiveWeights):
-  """
+  """Regression model solver using adaptive weights.
+
   Parameters
   ----------
   model: str, default = 'lm'
@@ -131,6 +133,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     verbose: bool = False,
     canon_backend: str = "CPP",
   ):
+    """Initialize the regressor model."""
     super().__init__(
       model=model,
       penalization=penalization,
@@ -212,6 +215,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the regressor model to the provided data."""
     self._check_attributes()
     if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
       self.fit_weights(X, y, group_index)
