@@ -1,0 +1,3 @@
+## 2025-02-28 - Optimize CVXPY canonicalization
+**Learning:** CVXPY canonicalization time for element-wise multiplication (`cp.multiply`) followed by aggregations (`cp.sum`, `cp.sum_squares`, `cp.norm1`) can be significantly reduced by reformulating them into vector/matrix inner products (e.g., using `@`). For matrix variables, `np.square(weights).reshape(-1) @ cp.sum(cp.square(beta_var), axis=1)` is more efficient than `cp.sum_squares(cp.multiply(weights, beta_var))` and strictly avoids DCP rule violations.
+**Action:** When working with CVXPY, favor standard inner product formulations over element-wise operations with subsequent summation, being mindful to reshape arrays properly for DCP compatibility.
