@@ -1,4 +1,4 @@
-from typing import Sequence, Optional, Union
+from typing import Sequence
 import cvxpy as cp
 import numpy as np
 
@@ -111,12 +111,12 @@ class Regressor(BaseModel, AdaptiveWeights):
   def __init__(
     self,
     model: str = "lm",
-    penalization: Optional[str] = "lasso",
+    penalization: str | None = "lasso",
     quantile: float = 0.5,
     fit_intercept: bool = True,
     lambda1: float = 0.1,
     alpha: float = 0.5,
-    solver: Union[str, Sequence[str]] = "default",
+    solver: str | Sequence[str] = "default",
     weight_technique: str = "pca_pct",
     individual_power_weight: float = 1,
     group_power_weight: float = 1,
@@ -124,8 +124,8 @@ class Regressor(BaseModel, AdaptiveWeights):
     lambda1_weights: float = 0.1,
     spca_alpha: float = 1e-5,
     spca_ridge_alpha: float = 1e-2,
-    individual_weights: Optional[np.ndarray] = None,
-    group_weights: Optional[np.ndarray] = None,
+    individual_weights: np.ndarray | None = None,
+    group_weights: np.ndarray | None = None,
     weight_tol: float = 1e-4,
     tol: float = 1e-3,
     verbose: bool = False,
@@ -156,7 +156,7 @@ class Regressor(BaseModel, AdaptiveWeights):
 
   # Penalized problems
   def _aridge(
-    self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
+    self, beta_var: cp.Variable, group_index: Sequence[int] | None
   ) -> cp.Expression:
     mx, my = beta_var.shape
     # Reshape weights to (mx, 1) for proper broadcasting across my outputs
@@ -165,7 +165,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     return pen
 
   def _alasso(
-    self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
+    self, beta_var: cp.Variable, group_index: Sequence[int] | None
   ) -> cp.Expression:
     mx, my = beta_var.shape
     # Reshape weights to (mx, 1) for proper broadcasting across my outputs
@@ -210,7 +210,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     self,
     X: ArrayOrSparse,
     y: ArrayOrSparse,
-    group_index: Optional[Sequence[int]] = None,
+    group_index: Sequence[int] | None = None,
   ):
     self._check_attributes()
     if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
