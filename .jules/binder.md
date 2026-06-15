@@ -1,0 +1,3 @@
+## 2024-06-15 - Move sklearn tags imports to module level
+**Learning:** `ClassifierTags` and `RegressorTags` are imported inside the `__sklearn_tags__` method definition in `asgl/base_model.py`. This violates the rule against importing libraries inside method definitions and can cause performance issues and styling problems. However, moving them to the top might cause import errors if scikit-learn version is older and doesn't have `_tags` module.
+**Action:** Move these imports to the module level but inside a `try...except ImportError` block to safely handle different scikit-learn versions without breaking.
