@@ -340,7 +340,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     group_index: Optional[Sequence[int]] = None,
   ):
     self.feature_names_in_ = None
-    if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
+    if hasattr(X, "columns") and not callable(getattr(X, "columns", None)):
       self.feature_names_in_ = np.asarray(X.columns, dtype=object)
     X, y = check_X_y(
       X,
