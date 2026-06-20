@@ -339,6 +339,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the penalized regression model."""
     self.feature_names_in_ = None
     if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
       self.feature_names_in_ = np.asarray(X.columns, dtype=object)
@@ -385,6 +386,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return self
 
   def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict raw linear scores."""
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     intercept = self.intercept_ if self.fit_intercept else 0
     predictions = (
@@ -395,6 +397,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return predictions
 
   def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict class probabilities for logistic regression."""
     if self._estimator_type != "classifier":
       raise AttributeError(
         f"predict_proba is not available when model is '{self.model}'. It is only available for classifier models."
@@ -405,6 +408,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return np.vstack([1 - proba_pos_class, proba_pos_class]).T
 
   def predict(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict regression output or class labels."""
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     raw_predictions = self.decision_function(X)
     if self._estimator_type == "classifier":
@@ -440,6 +444,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     }
 
   def score(self, X, y, sample_weight=None):
+    """Return the coefficient of determination or accuracy score."""
     if self._estimator_type == "regressor":
       return RegressorMixin.score(self, X, y, sample_weight)
     else:  # Classifier
