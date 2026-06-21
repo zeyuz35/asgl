@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Optional, Tuple, Union
+from collections.abc import Sequence
 from sklearn.utils.validation import check_X_y
 import numpy as np
 from sklearn.cross_decomposition import PLSRegression
@@ -29,9 +29,9 @@ class AdaptiveWeights:
     lambda1_weights: float = 0.1,
     spca_alpha: float = 1e-5,
     spca_ridge_alpha: float = 1e-2,
-    individual_weights=None,
-    group_weights=None,
-    solver: Union[str, Sequence[str]] = "CLARABEL",
+    individual_weights: np.ndarray | None = None,
+    group_weights: np.ndarray | None = None,
+    solver: str | Sequence[str] = "CLARABEL",
     weight_tol: float = 1e-4,
     verbose: bool = False,
     canon_backend: str = "CPP",
@@ -274,7 +274,7 @@ class AdaptiveWeights:
       tmp_weight = np.linalg.norm(tmp_weight, axis=1)
     return tmp_weight
 
-  def _check_type_penalization(self) -> Tuple[bool, bool]:
+  def _check_type_penalization(self) -> tuple[bool, bool]:
     return (
       self.penalization in INDIV_ADAPTIVE,
       self.penalization in GROUP_ADAPTIVE,
@@ -284,7 +284,7 @@ class AdaptiveWeights:
     self,
     X: ArrayOrSparse,
     y: ArrayOrSparse,
-    group_index: Optional[Sequence[int]] = None,
+    group_index: Sequence[int] | None = None,
   ):
     if (
       not isinstance(self.weight_technique, str)
@@ -307,7 +307,7 @@ class AdaptiveWeights:
       raise ValueError(
         "A group penalisation was requested but `group_index` is missing."
       )
-    tmp_weight: Optional[np.ndarray] = None
+    tmp_weight: np.ndarray | None = None
     if bool_individual:
       if self.individual_weights is None:
         tmp_weight = getattr(self, "_w" + self.weight_technique)(X=X, y=y)
