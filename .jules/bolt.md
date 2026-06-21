@@ -1,0 +1,3 @@
+## YYYY-MM-DD - CVXPY Inner Product Optimization
+**Learning:** CVXPY's element-wise `cp.multiply` followed by aggregations is much slower than formulating the operation as an inner product using matrix multiplication (`@`). This occurs because element-wise multiplication creates an explicit intermediate graph node for the full multidimensional variable, which significantly impacts CVXPY compilation time.
+**Action:** When performing aggregate penalty calculations over weights and decision variables in CVXPY, formulate the operation as an inner product directly (e.g., `np.square(weights) @ cp.sum(cp.square(beta), axis=1)`) instead of multiplying then summing. Ensure weight array shapes align correctly for matrix multiplication to maintain dimensions.
