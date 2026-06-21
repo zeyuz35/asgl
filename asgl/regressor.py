@@ -13,7 +13,8 @@ from .adaptive_weights import AdaptiveWeights
 
 
 class Regressor(BaseModel, AdaptiveWeights):
-  """
+  """Penalized regression models using cvxpy.
+
   Parameters
   ----------
   model: str, default = 'lm'
