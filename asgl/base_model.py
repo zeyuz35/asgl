@@ -1,3 +1,5 @@
+"""Base model module for penalized regression."""
+
 import warnings
 from typing import Sequence, Optional, Tuple, Union
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
@@ -20,9 +22,7 @@ from .utils import _get_group_info
 
 
 class BaseModel(BaseEstimator, RegressorMixin):
-  """
-  Base class for penalized regression models using cp.
-  """
+  """Base class for penalized regression models using cp."""
 
   def __init__(
     self,
@@ -37,6 +37,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     verbose: bool = False,
     canon_backend: str = "CPP",
   ):
+    """Initialize the BaseModel."""
     self.model = model
     self.penalization = penalization
     self.quantile = quantile
@@ -56,8 +57,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
       return "regressor"
 
   def _check_attributes(self) -> None:
-    """
-    Validate constructor arguments.
+    """Validate constructor arguments.
+
     Raises ValueError If any argument is outside the allowed domain.
     """
     # Numerical arguments
@@ -104,7 +105,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
       )
 
   def _quantile_function(self, X) -> cp.Expression:
-    """cp quantile loss function."""
+    """Cp quantile loss function."""
     # new implementation, should be more efficient avoiding abs
     # Uses a residual splitting approach
     q = float(self.quantile)
@@ -339,6 +340,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the model."""
     self.feature_names_in_ = None
     if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
       self.feature_names_in_ = np.asarray(X.columns, dtype=object)
@@ -385,6 +387,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return self
 
   def decision_function(self, X: ArrayOrSparse) -> np.ndarray:
+    """Compute the decision function."""
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     intercept = self.intercept_ if self.fit_intercept else 0
     predictions = (
@@ -395,6 +398,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return predictions
 
   def predict_proba(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict class probabilities."""
     if self._estimator_type != "classifier":
       raise AttributeError(
         f"predict_proba is not available when model is '{self.model}'. It is only available for classifier models."
@@ -405,6 +409,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return np.vstack([1 - proba_pos_class, proba_pos_class]).T
 
   def predict(self, X: ArrayOrSparse) -> np.ndarray:
+    """Predict labels or values."""
     check_is_fitted(self, ["coef_", "intercept_", "is_fitted_"])
     raw_predictions = self.decision_function(X)
     if self._estimator_type == "classifier":
@@ -418,6 +423,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
       return raw_predictions
 
   def __sklearn_tags__(self):
+    """Return the tags for the scikit-learn API."""
     tags = super().__sklearn_tags__()
     tags.target_tags.required = True
     tags.target_tags.multi_output = True
@@ -440,6 +446,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     }
 
   def score(self, X, y, sample_weight=None):
+    """Return the score of the model."""
     if self._estimator_type == "regressor":
       return RegressorMixin.score(self, X, y, sample_weight)
     else:  # Classifier

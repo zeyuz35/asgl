@@ -1,3 +1,5 @@
+"""Regressor module for fitting penalized models."""
+
 from typing import Sequence, Optional, Union
 import cvxpy as cp
 import numpy as np
@@ -13,7 +15,8 @@ from .adaptive_weights import AdaptiveWeights
 
 
 class Regressor(BaseModel, AdaptiveWeights):
-  """
+  """Regressor class.
+
   Parameters
   ----------
   model: str, default = 'lm'
@@ -131,6 +134,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     verbose: bool = False,
     canon_backend: str = "CPP",
   ):
+    """Initialize the Regressor."""
     super().__init__(
       model=model,
       penalization=penalization,
@@ -212,6 +216,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     y: ArrayOrSparse,
     group_index: Optional[Sequence[int]] = None,
   ):
+    """Fit the model to the training data."""
     self._check_attributes()
     if self.penalization in (INDIV_ADAPTIVE + GROUP_ADAPTIVE):
       self.fit_weights(X, y, group_index)
