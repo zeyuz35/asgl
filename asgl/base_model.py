@@ -1,5 +1,5 @@
 import warnings
-from typing import Sequence, Optional, Tuple, Union
+from collections.abc import Sequence
 from sklearn.utils.validation import check_is_fitted, check_X_y, check_scalar
 import cvxpy as cp
 import numpy as np
@@ -27,12 +27,12 @@ class BaseModel(BaseEstimator, RegressorMixin):
   def __init__(
     self,
     model: str = "lm",
-    penalization: Optional[str] = "lasso",
+    penalization: str | None = "lasso",
     quantile: float = 0.5,
     fit_intercept: bool = True,
     lambda1: float = 0.1,
     alpha: float = 0.5,
-    solver: Union[str, Sequence[str]] = "CLARABEL",
+    solver: str | Sequence[str] = "CLARABEL",
     tol: float = 1e-3,
     verbose: bool = False,
     canon_backend: str = "CPP",
@@ -243,13 +243,13 @@ class BaseModel(BaseEstimator, RegressorMixin):
 
   # Penalized problems
   def _ridge(
-    self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
+    self, beta_var: cp.Variable, group_index: Sequence[int] | None
   ) -> cp.Expression:
     pen = self.lambda1 * cp.sum_squares(beta_var)
     return pen
 
   def _lasso(
-    self, beta_var: cp.Variable, group_index: Optional[Sequence[int]]
+    self, beta_var: cp.Variable, group_index: Sequence[int] | None
   ) -> cp.Expression:
     pen = self.lambda1 * cp.norm1(beta_var)
     return pen
@@ -277,8 +277,8 @@ class BaseModel(BaseEstimator, RegressorMixin):
     return pen
 
   def _obtain_beta(
-    self, X: ArrayOrSparse, y: ArrayOrSparse, group_index: Optional[Sequence[int]]
-  ) -> Tuple[np.ndarray, np.ndarray]:
+    self, X: ArrayOrSparse, y: ArrayOrSparse, group_index: Sequence[int] | None
+  ) -> tuple[np.ndarray, np.ndarray]:
     n = X.shape[0]
     mx = X.shape[1]
     # Ensure y is 2D for CVXPY operations
@@ -337,7 +337,7 @@ class BaseModel(BaseEstimator, RegressorMixin):
     self,
     X: ArrayOrSparse,
     y: ArrayOrSparse,
-    group_index: Optional[Sequence[int]] = None,
+    group_index: Sequence[int] | None = None,
   ):
     self.feature_names_in_ = None
     if hasattr(X, "columns") and callable(getattr(X, "columns", None)):
