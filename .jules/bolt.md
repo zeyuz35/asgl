@@ -1,0 +1,3 @@
+## 2025-02-23 - Optimize CVXPY inner products
+**Learning:** CVXPY can compile problems significantly faster if explicit multiply-and-sum chains (`cp.sum(cp.multiply(weights, expr))` or `cp.norm1(cp.multiply(weights, expr))`) are replaced with equivalent array operations or inner products (e.g. `@` matrix multiplication). Care must be taken to satisfy array broadcast shapes and DCP rules by appropriately reshaping weights or summing the variable axis.
+**Action:** When working on CVXPY objective functions, always replace `cp.sum(cp.multiply(...))` and `cp.norm1(cp.multiply(...))` aggregations with `@` operations by reshaping constants to 1D arrays to dramatically reduce compilation time.
