@@ -161,7 +161,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     mx, my = beta_var.shape
     # Reshape weights to (mx, 1) for proper broadcasting across my outputs
     weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-    pen = self.lambda1 * cp.sum_squares(cp.multiply(weights, beta_var))
+    pen = self.lambda1 * (np.square(weights).reshape(-1) @ cp.sum(cp.square(beta_var), axis=1))
     return pen
 
   def _alasso(
@@ -170,7 +170,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     mx, my = beta_var.shape
     # Reshape weights to (mx, 1) for proper broadcasting across my outputs
     weights = np.asarray(self.individual_weights_).reshape(-1, 1)
-    pen = self.lambda1 * cp.norm1(cp.multiply(weights, beta_var))
+    pen = self.lambda1 * (np.abs(weights).reshape(-1) @ cp.sum(cp.abs(beta_var), axis=1))
     return pen
 
   def _agl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
@@ -183,7 +183,7 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
     )
-    pen = self.lambda1 * cp.sum(cp.multiply(group_weights, group_norms))
+    pen = self.lambda1 * (group_weights @ group_norms)
     return pen
 
   def _asgl(self, beta_var: cp.Variable, group_index: Sequence[int]) -> cp.Expression:
@@ -199,10 +199,10 @@ class Regressor(BaseModel, AdaptiveWeights):
     group_norms = cp.hstack(
       [cp.norm2(beta_var[indices_per_group[g], :]) for g in unique_groups]
     )
-    individual_penalization = individual_param * cp.norm1(
-      cp.multiply(weights, beta_var)
+    individual_penalization = individual_param * (
+      np.abs(weights).reshape(-1) @ cp.sum(cp.abs(beta_var), axis=1)
     )
-    group_penalization = group_param * cp.sum(cp.multiply(group_weights, group_norms))
+    group_penalization = group_param * (group_weights @ group_norms)
     pen = individual_penalization + group_penalization
     return pen
 
